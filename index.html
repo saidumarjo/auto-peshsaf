@@ -539,6 +539,15 @@ s.oldc{font:12px var(--mono);color:var(--muted)}
 .qform .sum.vat{border-top:0;padding-top:2px;font-weight:600;color:var(--muted)}
 .qform .sum.tot{font-size:16px}
 .vatl{display:block;font:600 10.5px var(--body);color:var(--muted);text-align:right}
+
+.steps{display:flex;flex-wrap:wrap;gap:6px}
+.stp{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 9px 3px 3px}
+.stp i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:700 10.5px var(--body);font-style:normal;background:var(--surface2)}
+.stp.done{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.stp.done i{background:var(--ok);color:#fff}
+.stp.cur{color:var(--ink);border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.stp.cur i{background:var(--brass);color:#14213a}
+.cargo-ph{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:10px}
 </style>
 </head>
 <body>
@@ -670,7 +679,7 @@ const errTxt=e=>{const c=e&&(e.code||'')||'';if(c.includes('permission'))return'
 
 /* photos (stored in Firestore as small JPEG) */
 const PH_PLACE='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#8888"/></svg>');
-function photosHtml(r){const ph=r.photos||[];if(!ph.length)return'';return`<div class="photos">${ph.map(p=>`<button class="thumb" data-act="lb" data-v="${esc(p.id)}"><img data-pid="${esc(p.id)}" src="${S.ph[p.id]||PH_PLACE}" alt="Акси қисм"><i>${p.k==='w'?'коргар':'муштарӣ'}</i></button>`).join('')}</div>`}
+function photosHtml(r){const ph=r.photos||[];if(!ph.length)return'';return`<div class="photos">${ph.map(p=>`<button class="thumb" data-act="lb" data-v="${esc(p.id)}"><img data-pid="${esc(p.id)}" src="${S.ph[p.id]||PH_PLACE}" alt="Акси қисм"><i>${p.k==='g'?'карго':p.k==='w'?'коргар':'муштарӣ'}</i></button>`).join('')}</div>`}
 function fillPhotos(){app.querySelectorAll('img[data-pid]').forEach(img=>{const id=img.dataset.pid;if(S.ph[id]){if(img.src!==S.ph[id])img.src=S.ph[id];return}
   if(S.phLoading[id])return;S.phLoading[id]=true;getDoc(doc(db,'photos',id)).then(s=>{if(s.exists()){S.ph[id]=s.data().data;app.querySelectorAll('img[data-pid="'+id+'"]').forEach(x=>x.src=S.ph[id])}}).catch(()=>{})})}
 function uplBtn(id,label){return`<label class="upl">${ICON_CAM}${label}<input type="file" accept="image/*" multiple data-up="${id}"></label>`}
@@ -719,6 +728,14 @@ function rebuild(){
 function periodStart(){const d=new Date();d.setHours(0,0,0,0);if(S.period==='today')return+d;if(S.period==='month'){d.setDate(1);return+d}if(S.period==='week'){d.setDate(d.getDate()-6);return+d}return 0}
 const inPer=r=>(r.createdAt||0)>=periodStart();
 const wasFound=r=>!!r.foundAt||['found','offered',...SOLD,'returned'].includes(r.status)||(r.status==='cancelled'&&!!r.offeredAt);
+function procHtml(r){
+  const os=r.ordStage||'',sh=['shipped','delivered'].includes(r.status),sold=SOLD.includes(r.status);
+  const S_=[['Дархост',1],['Масъул',!!r.workerId],['Нарх ёфт',wasFound(r)],['Ба муштарӣ',wasOffered(r)],['Қабул кард',sold],['Масъули заказ',!!r.orderWorkerId],['Харид',sh||['bought','packed','shipped'].includes(os)],['Баста',sh||['packed','shipped'].includes(os)],['Карго + акс',sh],['Музд',!!r.comPaid||(sold&&!comWorker(r))],['Фоида',sh&&(!!r.comPaid||!comWorker(r))]];
+  if(['cancelled','notfound','returned'].includes(r.status))return'';
+  const cur=S_.findIndex(x=>!x[1]);
+  return`<div class="card proc"><h3>Раванд</h3><div class="steps">${S_.map(([l,d],i)=>`<span class="stp ${d?'done':i===cur?'cur':''}"><i>${d?'✓':i+1}</i>${l}</span>`).join('')}</div></div>`;
+}
+const netOf=r=>Math.round((profitOf(r)-(hasCom(r)?+r.com||0:0))*100)/100;
 const wasOffered=r=>!!r.offeredAt||['offered',...SOLD,'returned'].includes(r.status);
 function wStats(id,from){
   const rs=S.reqs.filter(r=>r.workerId===id&&(r.createdAt||0)>=(from||0));
@@ -841,14 +858,14 @@ function reportView(){
     const rs=S.reqs.filter(r=>(r.createdAt||0)>=from),n=rs.length;
     if(!n)return top+`<div class="empty"><b>Дар ин давра дархост нест</b><span class="small">Давраи дигарро интихоб кунед.</span></div>`;
     const sold=rs.filter(r=>SOLD.includes(r.status));
-    const rev=sold.reduce((a,r)=>a+(+r.price||0),0),cost=sold.reduce((a,r)=>a+(+r.cost||0),0),profit=rev-cost,debt=S.reqs.reduce((a,r)=>a+balOf(r),0);
+    const rev=sold.reduce((a,r)=>a+(+r.price||0),0),cost=sold.reduce((a,r)=>a+(+r.cost||0),0),profit=rev-cost,coms=sold.reduce((a,r)=>a+(hasCom(r)?+r.com||0:0),0),net=profit-coms,debt=S.reqs.reduce((a,r)=>a+balOf(r),0);
     const fun=[['Ҳамаи дархостҳо',n,'var(--info)'],['Ёфт шуд',rs.filter(wasFound).length,'var(--ok)'],['Нарх ба муштарӣ рафт',rs.filter(wasOffered).length,'var(--violet)'],['Фурӯхта шуд',sold.length,'var(--ok)']];
     const lost=[['Дар кор',rs.filter(r=>ACTIVE.includes(r.status)&&!SOLD.includes(r.status)).length],['Ёфт нашуд',rs.filter(r=>r.status==='notfound').length],['Муштарӣ рад/бекор кард',rs.filter(r=>r.status==='cancelled').length],['Баргашт',rs.filter(r=>r.status==='returned').length]];
     const days={};rs.forEach(r=>{const d=new Date(r.createdAt);const k=d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());const x=days[k]||(days[k]={t:r.createdAt,n:0,f:0,s:0,p:0});x.n++;if(wasFound(r))x.f++;if(SOLD.includes(r.status)){x.s++;x.p+=(+r.price||0)-(+r.cost||0)}});
     const dl=Object.entries(days).sort((a,b)=>b[0]<a[0]?-1:1).slice(0,60);
     return top+`<div class="card"><h3>Аз дархост то фурӯш</h3><div class="fun">${fun.map(([l,v,c])=>`<div class="frow"><span>${l}</span><span class="fbar"><i style="width:${v/n*100}%;background:${c}"></i></span><b>${v}</b><small>${Math.round(v/n*100)}%</small></div>`).join('')}</div>
       <div class="wnums">${lost.map(([l,v],i)=>`<div class="${i?'x':'o'}"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div>
-      <div class="card"><h3>Пул</h3><div class="bal"><div><span>Фурӯш</span><b>${money(rev)}</b></div><div><span>Харид</span><b>${money(cost)}</b></div><div class="ok-b"><span>Фоида</span><b>${money(profit)}</b></div><div><span>Фоизи фоида</span><b>${rev?Math.round(profit/rev*100)+'%':'—'}</b></div><div class="${debt?'due-b':''}"><span>Қарз (ҳама вақт)</span><b>${money(debt)}</b></div></div></div>
+      <div class="card"><h3>Пул</h3><div class="bal"><div><span>Фурӯш</span><b>${money(rev)}</b></div><div><span>Харид</span><b>${money(cost)}</b></div><div><span>Фоида</span><b>${money(profit)}</b></div><div><span>Музди коргарон</span><b>${money(coms)}</b></div><div class="ok-b"><span>Фоидаи соф</span><b>${money(net)}</b></div><div><span>Фоизи фоида</span><b>${rev?Math.round(net/rev*100)+'%':'—'}</b></div><div class="${debt?'due-b':''}"><span>Қарз (ҳама вақт)</span><b>${money(debt)}</b></div></div></div>
       <div class="card"><h3>Таърих аз рӯи рӯз</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Сана</th><th>Дархост</th><th>Ёфт шуд</th><th>Фурӯхта</th><th>Фоида</th></tr></thead><tbody>${dl.map(([,x])=>`<tr><td>${fdate(x.t)}</td><td>${x.n}</td><td>${x.f}</td><td>${x.s}</td><td>${x.p?num(x.p):'—'}</td></tr>`).join('')}</tbody></table></div></div>`;
   }
   if(S.repTab==='s'){
@@ -1127,6 +1144,7 @@ function sheet(){
     if(SOLD.includes(r.status)){
       const cw=comWorker(r),cands=[...new Set([r.workerId,r.orderWorkerId].filter(Boolean))];
       const pct=r.comPct!=null?r.comPct:wPct(cw),amt=r.com!=null?r.com:comSug(r,pct);
+      if(+r.cost>0)act+=`<div class="card"><h3>Фоидаи ин заказ</h3><div class="bal"><div><span>Фурӯш</span><b>${money(r.price)}</b></div><div><span>Харид</span><b>${money(r.cost)}</b></div><div><span>Музди коргар</span><b>${hasCom(r)?money(r.com):'—'}</b></div><div class="ok-b"><span>Фоидаи соф</span><b>${money(netOf(r))}</b></div></div></div>`;
       act+=`<div class="card"><h3>Инвойс</h3><div class="small muted">Ҳисобнома барои муштарӣ — чоп, PDF ё фиристодан.</div><div><button class="btn" data-act="inv" data-id="${r.id}">🧾 Инвойсро кушодан</button></div></div>`;
       act+=`<div class="card pricing"><h3>Музди коргар</h3>${!(+r.cost>0)?'<div class="small muted">Аввал нархи харидро ворид кунед — музд аз фоида ҳисоб мешавад.</div>':!cw?'<div class="small muted">Дар ин заказ коргар нест.</div>':`
         <div class="bal"><div><span>Фоидаи заказ</span><b>${money(profitOf(r))}</b></div><div><span>Коргар</span><b style="font-family:var(--body)">${esc(uname(cw))}</b></div><div class="${r.comPaid?'ok-b':hasCom(r)?'due-b':''}"><span>Ҳолат</span><b style="font-family:var(--body)">${r.comPaid?'Пардохт шуд':hasCom(r)?'Бояд диҳед':'Муайян нашуд'}</b></div></div>
@@ -1159,8 +1177,9 @@ function sheet(){
       act+=`<div class="card pricing"><h3>Заказ: тайёр кардан ва ба карго</h3>
         <div class="bal"><div><span>Паставшик</span><b style="font-family:var(--body)">${esc(r.supplier||'—')}</b></div>${r.supplierPhone?`<div><span>Телефон</span><b><a class="link" href="${waLink(r.supplierPhone,'Салом! Барои заказ №'+r.code+':\n'+waText(r))}" target="_blank" rel="noopener">${esc(r.supplierPhone)}</a></b></div>`:''}${r.cost?`<div><span>Нархи харид</span><b>${money(r.cost)}</b></div>`:''}</div>
         <div class="small">Ҳолат: <b>${esc(r.status==='shipped'?OST.shipped:OST[st])}</b></div>
+        ${r.status==='shipped'?`<div class="small">Карго: <b>${esc(r.cargo||'—')}</b>${r.tracking?' · '+esc(r.tracking):''}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Боз акс илова кардан<input type="file" accept="image/*" multiple data-up="${r.id}" data-kind="g"></label>`:''}
         ${r.status==='ordered'?`<div class="bar">${st==='assigned'?`<button class="btn pri" data-act="ostage" data-id="${r.id}" data-v="bought">Аз паставшик гирифтам</button>`:''}${st==='bought'?`<button class="btn pri" data-act="ostage" data-id="${r.id}" data-v="packed">Бастабандӣ шуд</button>`:''}</div>
-        ${st==='packed'?`<div class="grid"><label>Номи карго<input id="o-cargo-${r.id}" value="${esc(r.cargo||'')}" placeholder="Масалан: Cargo Dushanbe"></label><label>Рақами пайгирӣ / накладной<input id="o-trk-${r.id}" value="${esc(r.tracking||'')}"></label></div><div><button class="btn ok" data-act="ocargo" data-id="${r.id}">Ба карго супоридам</button></div>`:''}`:''}</div>`;}
+        ${st==='packed'?`<div class="cargo-ph"><div class="small" style="font-weight:700">1. Акси бор дар карго ${(r.photos||[]).some(p=>p.k==='g')?'<span class="best">гузошта шуд ✓</span>':'<span class="warn-note">(ҳатмӣ)</span>'}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Акси бор / накладной<input type="file" accept="image/*" capture="environment" multiple data-up="${r.id}" data-kind="g"></label></div><div class="small" style="font-weight:700">2. Маълумоти карго</div><div class="grid"><label>Номи карго<input id="o-cargo-${r.id}" value="${esc(r.cargo||'')}" placeholder="Масалан: Cargo Dushanbe"></label><label>Рақами пайгирӣ / накладной<input id="o-trk-${r.id}" value="${esc(r.tracking||'')}"></label></div><div><button class="btn ok" data-act="ocargo" data-id="${r.id}">Ба карго супоридам</button></div>`:''}`:''}</div>`;}
     if(r.status==='assigned'&&(!r.workerId||isMine))act+=`<div class="card"><h3>Кор</h3><div><button class="btn pri" data-act="take" data-id="${r.id}">Ба кор гирифтан</button></div></div>`;
     if(['searching','found'].includes(r.status)&&isMine){
       act+=quotesHtml(r,v,true);
@@ -1173,7 +1192,7 @@ function sheet(){
   const logs=r.log.concat(r.plog).sort((a,b)=>b.t-a.t);
   const log=`<details class="card dt" data-k="log" ${S.det.log?'open':''}><summary><h3>Таърих</h3></summary><ul class="log">${logs.map(l=>`<li><time>${fmt(l.t)}</time><span>${esc(l.s)} <span class="muted">· ${esc(uname(l.by))}</span></span></li>`).join('')}</ul></details>`;
   return`<div class="sheet-bg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="sheet-h"><span class="tag">${esc(r.code)}</span>${pill(r.status)}<span class="urg ${r.urgency||'d3'}">${URG[r.urgency||'d3'].l}</span><button class="x" data-act="close" aria-label="Пӯшидан">×</button><div class="ttl">${esc(titleOf(r))}</div></div>
-    <div class="card">${info}</div><div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div><div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
+    <div class="card">${info}</div>${adm?procHtml(r):''}<div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div><div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
 }
 
 function invoiceView(){
@@ -1345,7 +1364,7 @@ document.addEventListener('change',async e=>{
   if(t.type==='checkbox'&&t.dataset.qsum){qTotals(t.dataset.qsum);return}
   if(t.id==='n-photo'){const n=document.getElementById('n-photo-n');if(n)n.textContent=t.files.length?t.files.length+' акс интихоб шуд':'';return}
   if(t.dataset.up){const id=t.dataset.up,r=S.reqs.find(x=>x.id===id);if(!r||!t.files.length)return;toast('Акс бор шуда истодааст…');
-    const add=await uploadFiles(t.files,view()==='customer'?'c':'w',id,r.customerId||null);if(add.length)await upd(id,{photos:(r.photos||[]).concat(add)},add.length+' акс илова шуд');return}
+    const kd=t.dataset.kind||(view()==='customer'?'c':'w');const add=await uploadFiles(t.files,kd,id,r.customerId||null);if(add.length)await upd(id,{photos:(r.photos||[]).concat(add)},kd==='g'?'Акси бор дар карго: '+add.length:add.length+' акс илова шуд');return}
   if(t.id==='s-logo'){const fl=t.files&&t.files[0];if(!fl)return;try{const d=await logoData(fl);await setDoc(doc(db,'settings','app'),{logo:d},{merge:true});toast('Логотип сабт шуд')}catch(err){toast('Логотип сабт нашуд: '+errTxt(err))}return}
   if(a==='industry'){const p=PRESETS[t.value];if(p)for(const k of['f1','f1s','f1ph','f2','f2ph','f3','f3ph','f3len','itemPh','refHint','g1','g2']){const x=document.getElementById('s-'+k);if(x)x.value=p[k]??''}const nr=document.getElementById('s-needRef');if(nr&&p)nr.checked=!!p.needRef;return}
   if(a==='fgsel'){S.fGroup=t.value;render();return}
@@ -1467,7 +1486,7 @@ document.addEventListener('click',async e=>{
     case'assignord':{const w=b.dataset.v,u=S.users[w];if(!u||r.orderWorkerId===w)return;
       if(await upd(id,{orderWorkerId:w,ordStage:r.ordStage||'assigned'},'Масъули заказ: '+u.name))setDoc(doc(db,'priv',id),{orderWorkerId:w},{merge:true}).catch(()=>{});return}
     case'ostage':{const s=b.dataset.v;await upd(id,{ordStage:s},'Заказ: '+OST[s]);return}
-    case'ocargo':{const cg=val('o-cargo-'+id),tk=val('o-trk-'+id);if(!cg){toast('Номи каргоро нависед');return}
+    case'ocargo':{const cg=val('o-cargo-'+id),tk=val('o-trk-'+id);if(!(r.photos||[]).some(p=>p.k==='g')){toast('Аввал акси борро дар карго гузоред');return}if(!cg){toast('Номи каргоро нависед');return}
       await upd(id,{status:'shipped',ordStage:'shipped',cargo:cg,tracking:tk,shippedAt:Date.now()},'Ба карго дода шуд: '+cg+(tk?' · '+tk:''));return}
     case'admno':S.confirmAdm=null;break;
     case'admdel':{const em=b.dataset.v;if(S.confirmAdm!==em){S.confirmAdm=em;break}try{await deleteDoc(doc(db,'admins',em));S.confirmAdm=null;toast('Хориҷ шуд: '+em)}catch(err){toast('Нашуд: '+errTxt(err))}return}
