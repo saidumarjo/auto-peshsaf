@@ -1374,7 +1374,10 @@ function sheet(){
     const ph0=custPhone(r);
     const msgCard=ph0?`<div class="card"><h3>Хабар ба муштарӣ (WhatsApp)</h3><div class="wa">${esc(custMsg(r))}</div><div class="bar"><a class="btn ${['offered',...SOLD].includes(r.status)?'pri':''}" href="${waLink(ph0,custMsg(r))}" target="_blank" rel="noopener">Дар WhatsApp фиристодан</a><button class="btn" data-act="copytxt" data-v="cm-${r.id}">Нусха</button></div><textarea id="cm-${r.id}" hidden>${esc(custMsg(r))}</textarea></div>`:'';
     const top=['found','offered'].includes(r.status);
-    if(top)act+=priceCard+(r.status==='offered'?msgCard:'');
+    const custAns=r.status==='offered'?`<div class="card pricing confirm-c"><h3>Тасдиқи заказ</h3><div class="small muted">Агар муштарӣ дар сайт набошад (масалан дархостро шумо гузоштед ё ӯ дар WhatsApp ҷавоб дод), заказро аз номи ӯ тасдиқ кунед.</div>
+      <div class="bal"><div><span>Муштарӣ</span><b style="font-family:var(--body)">${esc(custName(r)||'—')}</b></div><div><span>Нарх</span><b>${money(r.price)}</b></div></div>
+      <div class="bar"><button class="btn ok" data-act="adm-accept" data-id="${r.id}">✓ Муштарӣ қабул кард — заказ</button><button class="btn bad" data-act="adm-decline" data-id="${r.id}">✕ Рад кард</button></div></div>`:'';
+    if(top)act+=custAns+priceCard+(r.status==='offered'?msgCard:'');
     if(['ordered','shipped'].includes(r.status)){const stg=['assigned','bought','packed','shipped'],cur=r.status==='shipped'?3:Math.max(0,stg.indexOf(r.ordStage||'assigned'));
       act+=`<div class="card pricing"><h3>${r.orderWorkerId?'Заказ: масъул ва ҳолат':'Заказ омад — масъулро интихоб кунед'}</h3><div class="small muted">Масъул молро аз паставшик мегирад, бастабандӣ мекунад ва ба карго месупорад.</div>
         ${ws.length?`<div class="pick">${ws.map(([wid,u])=>crewBtn(wid,u,r.orderWorkerId===wid,'assignord',`data-id="${r.id}"`)).join('')}</div>`:'<div class="small muted">Аввал дар «Одамон» коргар илова кунед.</div>'}
@@ -1771,6 +1774,8 @@ document.addEventListener('click',async e=>{
     case'delno':S.confirmDel=null;break;
     case'delreq':{if(S.confirmDel!==id){S.confirmDel=id;break}
       try{await deleteDoc(doc(db,'requests',id));await deleteDoc(doc(db,'priv',id)).catch(()=>{});for(const p of (r.photos||[]))deleteDoc(doc(db,'photos',p.id)).catch(()=>{});S.open=null;S.confirmDel=null;toast('Дархост №'+r.code+' нест карда шуд')}catch(err){toast('Нест нашуд: '+errTxt(err))}return}
+    case'adm-accept':if(r)await upd(id,{status:'ordered',orderedAt:Date.now()},'Роҳбар аз номи муштарӣ тасдиқ кард: заказ');return;
+    case'adm-decline':if(r)await upd(id,{status:'cancelled'},'Роҳбар қайд кард: муштарӣ рад кард');return;
     case'cust-accept':await upd(id,{status:'ordered',orderedAt:Date.now()},'Муштарӣ заказ дод');return;
     case'cust-decline':await upd(id,{status:'cancelled'},'Муштарӣ рад кард');return;
     case'cust-cancel':await upd(id,{status:'cancelled'},'Муштарӣ бекор кард');return;
