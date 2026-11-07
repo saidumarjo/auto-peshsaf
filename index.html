@@ -710,6 +710,15 @@ details.rpanel>summary::-webkit-details-marker{display:none}
 .rp-tg::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
 details.rpanel[open] .rp-tg::after{transform:rotate(-135deg) translateY(-1px)}
 .rp-body{display:flex;flex-direction:column;gap:10px;padding:0 16px 16px}
+
+@media (max-width:640px){
+  .bnav.c6{grid-template-columns:repeat(2,1fr) 64px repeat(3,1fr);align-items:end}
+  .bnav.c6 button span{font-size:10px}
+  .bplus{display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;cursor:pointer;height:100%}
+  .bplus span{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:30px!important;font-weight:400;line-height:1;color:var(--primary-ink);background:linear-gradient(145deg,var(--primary),color-mix(in srgb,var(--primary) 70%,var(--brass)));box-shadow:0 8px 20px rgba(20,40,80,.45),0 0 0 4px var(--bg);transform:translateY(-14px)}
+  .bplus:active span{transform:translateY(-12px) scale(.96)}
+  body:has(.bnav.c6) .fab{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -1002,7 +1011,7 @@ function adminView(){
   if(S.adminTab==='debt'){S.adminTab='cust';S.custSeg='debt'}
   const T=[['req','Дархостҳо'],['cust','Муштариён'],['inv','Инвойсҳо'],['rep','Ҳисобот'],['users','Одамон'],['set','Танзимот']];
   const tabs=`<div class="tabs top-tabs">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${l}${k==='cust'&&debtN?`<span class="badge">${debtN}</span>`:''}</button>`).join('')}</div>
-    <nav class="bnav c5" aria-label="Менюи асосӣ">${T.filter(([k])=>k!=='set').map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='cust'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
+    <nav class="bnav c6" aria-label="Менюи асосӣ">${T.filter(([k])=>k!=='set').map(([k,l],ix)=>(ix===2?`<button class="bplus" data-act="newreq" aria-label="Дархости нав"><span>+</span></button>`:'')+`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='cust'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
   if(S.adminTab==='users')return tabs+usersView();
   if(S.adminTab==='set')return tabs+settingsView();
   if(S.adminTab==='rep')return tabs+reportView();
@@ -1760,7 +1769,7 @@ document.addEventListener('click',async e=>{
     case'fmode':S.fMode=b.dataset.v;render();return;
     case'bulk':S.bulk=!S.bulk;render();setTimeout(()=>{const x=document.getElementById('n-codes');if(x)x.focus()},20);return;
     case'additem':S.nItems=Math.min(12,S.nItems+1);render();setTimeout(()=>{const x=document.getElementById('n-it-'+(S.nItems-1));if(x)x.focus()},20);return;
-    case'newreq':S.newReq=true;render();setTimeout(()=>{const f=document.getElementById('f-new');if(f){f.scrollIntoView({behavior:'smooth',block:'start'});const i=document.getElementById(view()==='admin'?'n-cname':'n-car');if(i)i.focus({preventScroll:true})}},30);return;
+    case'newreq':if(view()==='admin'){S.adminTab='req';S.open=null}S.newReq=true;render();setTimeout(()=>{const f=document.getElementById('f-new');if(f){f.scrollIntoView({behavior:'smooth',block:'start'});const i=document.getElementById(view()==='admin'?'n-cname':'n-car');if(i)i.focus({preventScroll:true})}},30);return;
     case'closenew':S.newReq=false;S.nItems=1;break;
     case'etab':S.entryTab=b.dataset.v;S.loginErr='';break;
     case'showpw':S.showPw=!S.showPw;break;
