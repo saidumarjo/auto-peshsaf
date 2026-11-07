@@ -590,6 +590,10 @@ s.oldc{font:12px var(--mono);color:var(--muted)}
 .pk-c{width:22px;text-align:center;color:var(--brass);font-weight:800;font-size:17px}
 @keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
+
+.wselw{position:relative;cursor:pointer}
+.wsel-x{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-size:14px}
+.wselw .wstat-top,.wselw>div>:first-child{padding-right:34px}
 </style>
 </head>
 <body>
@@ -855,7 +859,7 @@ function adminView(){
   const al=[nO?[nO+' заказ масъул надорад','ordnow']:null,nL?[nL+' дархост мӯҳлаташ гузашт','late']:null,nNew?[nNew+' дархости нав супоридан лозим','new']:null,nF?[nF+' дархост нарх лозим','found']:null].filter(Boolean);
   const alert=al.length?`<button class="alert" data-act="fs" data-v="${al[0][1]}">${al.map(a=>a[0]).join(' · ')}<span class="arr">→</span></button>`:'';
   const tool=`<div class="tool">${searchBox('Ҷустуҷӯ: рақам, мошин, қисм, муштарӣ, паставшик')}<select id="fg" data-act="fgsel" class="chip" style="width:auto">${[['all','Ҳама гурӯҳҳо'],['new','Нав'],['used','Кӯҳна'],['none','Бе гурӯҳ']].map(([k,l])=>`<option value="${k}" ${S.fGroup===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn pri desk" data-act="newreq">+ Дархости нав</button></div>`;
-  const wsel=S.fWorker!=='all'&&S.fWorker!=='none'&&S.users[S.fWorker]?wCard(S.fWorker,S.users[S.fWorker],0,false):'';
+  const wsel=S.fWorker!=='all'&&S.fWorker!=='none'&&S.users[S.fWorker]?`<div class="wselw" data-act="fw" data-v="all" role="button" title="Пӯшидан">${wCard(S.fWorker,S.users[S.fWorker],0,false)}<span class="wsel-x" aria-hidden="true">✕</span></div>`:'';
   const w=workers(),none=S.reqs.filter(r=>ACTIVE.includes(r.status)&&!r.workerId).length;
   const wOpts=[['all','Ҳамаи коргарон'],...w.map(([id,u])=>[id,u.name+' · '+loadOf(id)+' дар кор']),['none','Бе масъул'+(none?' · '+none:'')]];
   const chips=items.filter(([k,,n])=>n>0||k===S.fStatus||k==='active'||k==='all');
