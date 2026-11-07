@@ -555,6 +555,16 @@ s.oldc{font:12px var(--mono);color:var(--muted)}
 .rqdel:hover,.rqdel:active{color:var(--bad);border-color:var(--bad)}
 .rqconf{position:absolute;inset:0;border-radius:14px;background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--bad);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:10px;text-align:center}
 .rqconf span{width:100%;font-weight:700}
+
+.rpanel{gap:10px}
+.rp-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rp-f{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rp-f label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;min-width:0}
+.rp-f select{height:40px;font-size:14px;text-transform:none;letter-spacing:0;font-weight:600;min-width:0;width:100%}
+.rp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rp-chips .st{height:32px;font-size:13px;padding:0 10px}
+.rp-chips .st b{min-width:20px;height:20px;font-size:11.5px}
+.rpanel .search{margin:0}
 </style>
 </head>
 <body>
@@ -821,7 +831,16 @@ function adminView(){
   const alert=al.length?`<button class="alert" data-act="fs" data-v="${al[0][1]}">${al.map(a=>a[0]).join(' · ')}<span class="arr">→</span></button>`:'';
   const tool=`<div class="tool">${searchBox('Ҷустуҷӯ: рақам, мошин, қисм, муштарӣ, паставшик')}<select id="fg" data-act="fgsel" class="chip" style="width:auto">${[['all','Ҳама гурӯҳҳо'],['new','Нав'],['used','Кӯҳна'],['none','Бе гурӯҳ']].map(([k,l])=>`<option value="${k}" ${S.fGroup===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn pri desk" data-act="newreq">+ Дархости нав</button></div>`;
   const wsel=S.fWorker!=='all'&&S.fWorker!=='none'&&S.users[S.fWorker]?wCard(S.fWorker,S.users[S.fWorker],0,false):'';
-  return tabs+kpis()+alert+crew()+wsel+(S.newReq?newReqForm(true):'')+tool+`<div id="list-anchor"></div>`+pipe(items,S.fStatus,'fs')+cards(list,true)+`<button class="fab" data-act="newreq" aria-label="Дархости нав">+</button>`;
+  const w=workers(),none=S.reqs.filter(r=>ACTIVE.includes(r.status)&&!r.workerId).length;
+  const wOpts=[['all','Ҳамаи коргарон'],...w.map(([id,u])=>[id,u.name+' · '+loadOf(id)+' дар кор']),['none','Бе масъул'+(none?' · '+none:'')]];
+  const chips=items.filter(([k,,n])=>n>0||k===S.fStatus||k==='active'||k==='all');
+  const panel=`<div class="card rpanel"><div class="rp-h"><h3>Дархостҳо</h3><span class="small muted">${list.length} нишон дода шуд</span></div>
+    ${searchBox('Ҷустуҷӯ: рақам, код, мошин, муштарӣ')}
+    <div class="rp-f"><label><span>Масъул</span><select data-act="fwsel" aria-label="Масъул">${wOpts.map(([k,l])=>`<option value="${k}" ${S.fWorker===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+      <label><span>Гурӯҳ</span><select id="fg" data-act="fgsel" aria-label="Гурӯҳ">${[['all','Ҳама гурӯҳҳо'],['new',C.g1||'Нав'],['used',C.g2||'Кӯҳна'],['none','Бе гурӯҳ']].map(([k,l])=>`<option value="${k}" ${S.fGroup===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label></div>
+    <div class="rp-chips">${chips.map(([k,l,n,kk])=>`<button class="st ${S.fStatus===k?'on':''} ${kk||''}" data-act="fs" data-v="${k}"><i></i>${esc(l)}<b>${n}</b></button>`).join('')}</div>
+    ${w.length?'':'<div class="note">Коргар нест. Дар қисми <b>Одамон</b> коргаронро бо логин ва парол илова кунед.</div>'}</div>`;
+  return tabs+kpis()+alert+wsel+(S.newReq?newReqForm(true):'')+panel+`<div id="list-anchor"></div>`+cards(list,true)+`<button class="fab" data-act="newreq" aria-label="Дархости нав">+</button>`;
 }
 function crew(){
   const w=workers();
@@ -1375,6 +1394,7 @@ document.addEventListener('change',async e=>{
   if(t.id==='s-logo'){const fl=t.files&&t.files[0];if(!fl)return;try{const d=await logoData(fl);await setDoc(doc(db,'settings','app'),{logo:d},{merge:true});toast('Логотип сабт шуд')}catch(err){toast('Логотип сабт нашуд: '+errTxt(err))}return}
   if(a==='industry'){const p=PRESETS[t.value];if(p)for(const k of['f1','f1s','f1ph','f2','f2ph','f3','f3ph','f3len','itemPh','refHint','g1','g2']){const x=document.getElementById('s-'+k);if(x)x.value=p[k]??''}const nr=document.getElementById('s-needRef');if(nr&&p)nr.checked=!!p.needRef;return}
   if(a==='fgsel'){S.fGroup=t.value;render();return}
+  if(a==='fwsel'){S.fWorker=t.value;render();return}
   if(a==='awsel'){S.asWorker=t.value;S.open=null;render();return}
   if(t.dataset&&t.dataset.wpct){const v=parseFloat(t.value);if(!(v>=0&&v<=100)){toast('Фоиз аз 0 то 100');return}try{await updateDoc(doc(db,'workers',t.dataset.wpct),{comPct:v});toast('Фоизи музд: '+v+'%')}catch(err){toast('Сабт нашуд: '+errTxt(err))}return}
   if(a==='wgroup'){const wid=t.dataset.id,w=S.workers[wid]||{};
