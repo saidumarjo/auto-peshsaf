@@ -478,7 +478,7 @@ const ICON_CAM='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stro
 const S={authReady:false,ready:false,isAdmin:false,wid:null,cid:null,denied:null,
   rawReqs:{},extra:{},privs:{},workers:{},customers:{},users:{},reqs:[],
   view:null,adminTab:'req',repTab:'o',period:'month',fStatus:'active',fGroup:'all',fWorker:'all',wTab:'new',q:'',open:null,newReq:false,toast:null,busy:false,
-  nItems:1,lb:null,lastRate:null,entryTab:'customer',ph:{},phLoading:{}};
+  nItems:1,lb:null,lastRate:null,entryTab:(typeof location!=='undefined'&&location.hash==='#worker')?'worker':'customer',ph:{},phLoading:{}};
 const app=document.getElementById('app');
 S.det={};S.qOpen=null;
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.k)S.det[d.dataset.k]=d.open},true);
