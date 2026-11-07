@@ -421,6 +421,11 @@ h3{font-size:10.5px}
 .ev{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .ev-login{background:var(--ok-bg);color:var(--ok)} .ev-open{background:var(--info-bg);color:var(--info)}
 .ev-close{background:var(--neutral-bg);color:var(--muted)} .ev-logout{background:var(--bad-bg);color:var(--bad)}
+
+.iconbtn.gear{margin-left:auto}
+.iconbtn.gear+.iconbtn{margin-left:0}
+.iconbtn.on{color:var(--primary);border-color:var(--primary);background:var(--primary-soft)}
+.bnav.c4{grid-template-columns:repeat(4,1fr)}
 </style>
 </head>
 <body>
@@ -605,9 +610,11 @@ function header(){
   const v=view();
   const sw=S.isAdmin?`<div class="seg">${[['admin','Роҳбар'],['worker','Коргар'],['customer','Муштарӣ']].map(([k,l])=>`<button data-act="view" data-v="${k}" class="${v===k?'on':''}">${l}</button>`).join('')}</div>`:'';
   const out=S.isAdmin||S.wid||S.cid?`<button class="iconbtn" data-act="logout" aria-label="Баромадан" title="Баромадан"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H4"/></svg></button>`:'';
+  const setOn=S.isAdmin&&v==='admin'&&S.adminTab==='set';
+  const gear=S.isAdmin?`<button class="iconbtn gear ${setOn?'on':''}" data-act="gotoset" aria-label="Танзимот" title="Танзимот">${IC(ICONS.set,18)}</button>`:'';
   const who=S.isAdmin?'Роҳбар':S.wid||S.cid?uname(S.wid||S.cid):'';
   const sub={admin:'Панели идора',worker:'Панели коргар',customer:'Дархостҳои ман',onboard:'Воридшавӣ'}[v]||'';
-  return`<header><div class="wrap hrow">${logoHtml()}<div class="brand"><b>${esc(C.name)}</b><span>${esc(sub)}${who?' · '+esc(who):''}</span></div>${out}${sw}</div></header>`;
+  return`<header><div class="wrap hrow">${logoHtml()}<div class="brand"><b>${esc(C.name)}</b><span>${esc(sub)}${who?' · '+esc(who):''}</span></div>${gear}${out}${sw}</div></header>`;
 }
 function searchBox(ph){return`<div class="search">${ICON_SEARCH}<input id="q" type="search" placeholder="${ph}" value="${esc(S.q)}" autocomplete="off"></div>`}
 function pipe(items,cur,act){return`<div class="pipe-wrap"><div class="pipe">${items.map(([k,l,n,kk])=>`<button class="st ${cur===k?'on':''} ${kk||''}" data-act="${act}" data-v="${k}"><i></i>${esc(l)}<b>${n}</b></button>`).join('')}</div></div>`}
@@ -639,7 +646,7 @@ function adminView(){
   const debtN=new Set(S.reqs.filter(r=>balOf(r)>0).map(r=>r.customerId||r.customerPhone||r.id)).size;
   const T=[['req','Дархостҳо'],['debt','Қарзҳо'],['rep','Ҳисобот'],['users','Одамон'],['set','Танзимот']];
   const tabs=`<div class="tabs top-tabs">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${l}${k==='debt'&&debtN?`<span class="badge">${debtN}</span>`:''}</button>`).join('')}</div>
-    <nav class="bnav" aria-label="Менюи асосӣ">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='debt'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
+    <nav class="bnav c4" aria-label="Менюи асосӣ">${T.filter(([k])=>k!=='set').map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='debt'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
   if(S.adminTab==='users')return tabs+usersView();
   if(S.adminTab==='set')return tabs+settingsView();
   if(S.adminTab==='rep')return tabs+reportView();
@@ -1096,6 +1103,7 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.act,id=b.dataset.id,r=id&&S.reqs.find(x=>x.id===id);
   switch(a){
     case'view':S.view=b.dataset.v;S.open=null;S.newReq=false;break;
+    case'gotoset':S.view='admin';S.open=null;S.newReq=false;S.adminTab=S.adminTab==='set'?'req':'set';render();scrollTo(0,0);return;
     case'atab':S.adminTab=b.dataset.v;render();scrollTo(0,0);return;
     case'rtab':S.repTab=b.dataset.v;break;
     case'fs':S.fStatus=b.dataset.v;break;
