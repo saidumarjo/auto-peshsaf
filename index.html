@@ -735,7 +735,12 @@ function usersView(){
     <div class="cred">${u.login?`<span class="ok-dot"></span>Логин: <b style="font-family:var(--mono)">${esc(u.login)}</b>`:'<span class="who none">Логин нест</span>'}<span class="spacer"></span><button class="link" data-act="cred" data-v="${id}">Логин/пароли нав</button></div>
     ${S.credFor===id?`<form class="cform" id="f-cred" data-id="${id}"><div class="grid"><label>Логини нав<input id="c-login" autocapitalize="none" spellcheck="false" required placeholder="${esc((u.login||translit(u.name))+'2')}"></label><label>Пароли нав (камаш 6)<input id="c-pass" required minlength="6" autocomplete="new-password"></label></div><div class="bar"><button class="btn pri" type="submit">Сабт</button><button class="btn" type="button" data-act="cred" data-v="">Бекор</button></div><div class="small muted">Логини кӯҳна дигар кор намекунад. Логини навро (бояд аз кӯҳна фарқ кунад) ва паролро ба коргар диҳед.</div></form>`:''}</div>
     <select data-act="wgroup" data-id="${id}" aria-label="Гурӯҳ">${[['all','Ҳарду гурӯҳ'],['new','Нав'],['used','Кӯҳна'],['removed','Хориҷ кардан']].map(([v,l])=>`<option value="${v}" ${(u.group||'all')===v?'selected':''}>${l}</option>`).join('')}</select></div>`;
-  return add+`<div class="note">Ба ҳар коргар <b>логин ва парол</b> диҳед. Коргар сайтро мекушояд, «Коргар»-ро интихоб мекунад ва бо ҳамон логин-парол ворид мешавад.</div>`
+  const owners=ADMIN_EMAILS.map(e=>[e,{name:'Соҳиб',owner:true}]),ads=Object.entries(S.admins||{});
+  const adminsBox=`<h3>Роҳбарон (админ) · ${owners.length+ads.length}</h3><div class="ulist">${owners.concat(ads).map(([e,a])=>`<div class="urow"><div class="av">${esc(initials(a.name||e))}</div><div class="main"><div style="font-weight:700">${esc(a.name||e.split('@')[0])}${a.owner?' <span class="pill k-g">Соҳиб</span>':''}</div><div class="small muted">${esc(e)}</div></div>${!a.owner&&S.isOwner?(S.confirmAdm===e?`<div class="bar"><button class="btn bad" data-act="admdel" data-v="${esc(e)}">Ҳа, хориҷ кун</button><button class="btn" data-act="admno">Не</button></div>`:`<button class="btn bad" data-act="admdel" data-v="${esc(e)}">Хориҷ кардан</button>`):''}</div>`).join('')}</div>
+    ${S.isOwner?`<form class="card" id="f-adm"><h2>Илова кардани роҳбар</h2><div class="small muted">Роҳбари нав ҳамаи дастрасиҳои шуморо мегирад: дархостҳо, нархҳо, пул, коргарон ва танзимот. Танҳо шумо (соҳиб) роҳбаронро илова ё хориҷ карда метавонед.</div>
+      <div class="grid"><label>Ном<input id="ad-name" placeholder="Масалан: Фирӯз"></label><label>Почтаи Gmail<input id="ad-email" type="email" required inputmode="email" autocapitalize="none" placeholder="name@gmail.com"></label></div>
+      <div><button class="btn pri" type="submit">Роҳбар кардан</button></div><div class="small muted">Роҳбари нав сайтро дар Chrome мекушояд → «Роҳбар» → «Бо Google ворид шудан» бо ҳамин почта.</div></form>`:''}`;
+  return add+adminsBox+`<div class="note">Ба ҳар коргар <b>логин ва парол</b> диҳед. Коргар сайтро мекушояд, «Коргар»-ро интихоб мекунад ва бо ҳамон логин-парол ворид мешавад.</div>`
     +`<h3>Коргарон · ${ws.length}</h3>`+(ws.length?`<div class="ulist">${ws.map(wrow).join('')}</div>`:`<div class="empty"><b>Ҳоло коргар нест</b><span class="small">Бо формаи боло илова кунед.</span></div>`)
     +`<h3>Муштариён · ${cs.length}</h3>`+(cs.length?`<div class="ulist">${cs.map(([id,u])=>`<div class="urow"><div class="av">${esc(initials(u.name))}</div><div class="main"><div style="font-weight:600">${esc(u.name)}</div><div class="small muted">${esc(u.phone||'')} · ${S.reqs.filter(r=>r.customerId===id).length} дархост</div></div>${u.phone?`<a class="btn" href="${waLink(u.phone)}" target="_blank" rel="noopener">WhatsApp</a>`:''}</div>`).join('')}</div>`:`<div class="empty"><b>Ҳоло муштарӣ нест</b></div>`);
 }
@@ -1002,6 +1007,13 @@ document.addEventListener('submit',async e=>{
     }catch(err){S.busy=false;const c=err.code||'';toast(c.includes('email-already-in-use')?'Ин логин аллакай истифода шудааст. Логини дигар нависед.':c.includes('weak-password')?'Парол суст аст (камаш 6 рамз).':'Сабт нашуд: '+errTxt(err))}
     return;
   }
+  if(fid==='f-adm'){
+    const em=val('ad-email').toLowerCase(),nm=val('ad-name');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){toast('Почтаро дуруст нависед');return}
+    if(ADMIN_EMAILS.includes(em)||(S.admins||{})[em]){toast('Ин почта аллакай роҳбар аст');return}
+    try{await setDoc(doc(db,'admins',em),{name:nm,email:em,addedAt:Date.now()});['ad-email','ad-name'].forEach(i=>{const x=document.getElementById(i);if(x)x.value=''});toast('Роҳбари нав илова шуд: '+em)}catch(err){toast('Илова нашуд: '+errTxt(err))}
+    return;
+  }
   if(fid==='f-set'){
     const g=k=>val('s-'+k);const d={name:g('name')||CFG_DEFAULT.name,tagline:g('tagline'),phone:g('phone'),industry:g('industry')||'general',
       f1:g('f1'),f1s:g('f1s')||g('f1'),f1ph:g('f1ph'),f2:g('f2'),f2ph:g('f2ph'),f3:g('f3'),f3ph:g('f3ph'),f3len:Math.max(0,parseInt(g('f3len'))||0),itemPh:g('itemPh'),refHint:g('refHint'),
@@ -1134,6 +1146,8 @@ document.addEventListener('click',async e=>{
     case'ostage':{const s=b.dataset.v;await upd(id,{ordStage:s},'Заказ: '+OST[s]);return}
     case'ocargo':{const cg=val('o-cargo-'+id),tk=val('o-trk-'+id);if(!cg){toast('Номи каргоро нависед');return}
       await upd(id,{status:'shipped',ordStage:'shipped',cargo:cg,tracking:tk,shippedAt:Date.now()},'Ба карго дода шуд: '+cg+(tk?' · '+tk:''));return}
+    case'admno':S.confirmAdm=null;break;
+    case'admdel':{const em=b.dataset.v;if(S.confirmAdm!==em){S.confirmAdm=em;break}try{await deleteDoc(doc(db,'admins',em));S.confirmAdm=null;toast('Хориҷ шуд: '+em)}catch(err){toast('Нашуд: '+errTxt(err))}return}
     case'delno':S.confirmDel=null;break;
     case'delreq':{if(S.confirmDel!==id){S.confirmDel=id;break}
       try{await deleteDoc(doc(db,'requests',id));await deleteDoc(doc(db,'priv',id)).catch(()=>{});for(const p of (r.photos||[]))deleteDoc(doc(db,'photos',p.id)).catch(()=>{});S.open=null;S.confirmDel=null;toast('Дархост №'+r.code+' нест карда шуд')}catch(err){toast('Нест нашуд: '+errTxt(err))}return}
@@ -1151,12 +1165,13 @@ function stopAll(){unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={
 function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);if(fn.fail)fn.fail();if(!sub.warned){sub.warned=true;toast('Қисме аз маълумот бор нашуд ('+errTxt(err)+'). Қоидаҳои Firebase-ро санҷед.')}}))}
 function waitAll(n){let left=n;S.ready=false;const t=setTimeout(()=>{S.slow=true;render()},10000);return()=>{if(--left<=0){clearTimeout(t);S.ready=true;S.slow=false}rebuild();render()}}
 function startAdmin(){
-  stopAll();const done=waitAll(4);
+  stopAll();const done=waitAll(5);
   const firstOnce=f=>{let first=true;const h=s=>{f(s);if(first){first=false;done()}else{rebuild();render()}};h.fail=()=>{if(first){first=false;done()}};return h};
   sub(query(collection(db,'requests'),orderBy('createdAt','desc'),limit(1500)),firstOnce(s=>{S.rawReqs={};s.forEach(d=>S.rawReqs[d.id]=d.data())}),'requests');
   sub(collection(db,'priv'),firstOnce(s=>{S.privs={};s.forEach(d=>S.privs[d.id]=d.data())}),'priv');
   sub(collection(db,'workers'),firstOnce(s=>{S.workers={};s.forEach(d=>S.workers[d.id]=d.data())}),'workers');
   sub(collection(db,'customers'),firstOnce(s=>{S.customers={};s.forEach(d=>S.customers[d.id]=d.data())}),'customers');
+  sub(collection(db,'admins'),firstOnce(s=>{S.admins={};s.forEach(d=>S.admins[d.id]=d.data())}),'admins');
 }
 function startWorker(wid){
   stopAll();S.wid=wid;const done=waitAll(6);
@@ -1180,12 +1195,13 @@ render();
 onSnapshot(doc(db,'settings','app'),s=>{applyCfg(s.exists()?s.data():null);render()},()=>{});
 getRedirectResult(auth).catch(()=>{});
 onAuthStateChanged(auth,async user=>{
-  S.isAdmin=false;S.wid=null;S.cid=null;S.denied=null;S.view=null;
+  S.isAdmin=false;S.isOwner=false;S.wid=null;S.cid=null;S.denied=null;S.view=null;
   if(!user){stopAll();S.authReady=true;S.ready=true;rebuild();render();return}
   S.authReady=true;S.ready=false;render();
   try{
     const email=(user.email||'').toLowerCase();
-    if(!user.isAnonymous&&ADMIN_EMAILS.includes(email)){S.isAdmin=true;startAdmin();return}
+    if(!user.isAnonymous&&ADMIN_EMAILS.includes(email)){S.isAdmin=true;S.isOwner=true;startAdmin();return}
+    if(!user.isAnonymous&&user.emailVerified&&!email.endsWith('@'+WORKER_DOMAIN)){const ad=await getDoc(doc(db,'admins',email)).catch(()=>null);if(ad&&ad.exists()){S.isAdmin=true;startAdmin();return}}
     if(email.endsWith('@'+WORKER_DOMAIN)){
       const st=await getDoc(doc(db,'staff',user.uid));
       if(!st.exists()){S.denied='Ин логин дигар фаъол нест. Аз роҳбар логини нав гиред.';S.ready=true;render();return}

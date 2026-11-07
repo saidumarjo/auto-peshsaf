@@ -4,9 +4,13 @@ service cloud.firestore {
 
     // ---------- кӣ кист ----------
     function signed() { return request.auth != null; }
-    function isAdmin() {
+    function isOwner() {
       return signed() && request.auth.token.email_verified == true
         && request.auth.token.email in ['umar.safaroov@gmail.com'];
+    }
+    function isAdmin() {
+      return isOwner() || (signed() && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
     }
     function isWorker() { return signed() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
     function wid() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.wid; }
@@ -18,6 +22,12 @@ service cloud.firestore {
     match /settings/{d} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // ---------- роҳбарон (танҳо соҳиб илова ё хориҷ мекунад) ----------
+    match /admins/{e} {
+      allow read: if isAdmin() || (signed() && request.auth.token.email != null && request.auth.token.email.lower() == e);
+      allow write: if isOwner();
     }
 
     // ---------- коргарон ----------
