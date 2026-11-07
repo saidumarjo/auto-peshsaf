@@ -548,6 +548,13 @@ s.oldc{font:12px var(--mono);color:var(--muted)}
 .stp.cur{color:var(--ink);border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
 .stp.cur i{background:var(--brass);color:#14213a}
 .cargo-ph{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:10px}
+
+.rqw{position:relative}
+.rqw>.rq>span:last-child{padding-right:44px}
+.rqdel{position:absolute;right:10px;bottom:10px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.rqdel:hover,.rqdel:active{color:var(--bad);border-color:var(--bad)}
+.rqconf{position:absolute;inset:0;border-radius:14px;background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--bad);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:10px;text-align:center}
+.rqconf span{width:100%;font-weight:700}
 </style>
 </head>
 <body>
@@ -770,12 +777,12 @@ function pipe(items,cur,act){return`<div class="pipe-wrap"><div class="pipe">${i
 function cards(list,showWorker){
   if(list===null)return'';
   if(!list.length)return`<div class="empty"><b>${S.q?'Чизе ёфт нашуд':'Дархост нест'}</b><span class="small">${S.q?'Калимаи дигарро санҷед.':'Дархостҳои нав дар ҳамин ҷо пайдо мешаванд.'}</span></div>`;
-  return`<div class="rqs">${list.map(r=>{const u=r.urgency||'d3';const bal=isAdminView()?balOf(r):0;return`<button class="rq ${kc(r.status)}" data-act="open" data-id="${r.id}">
+  return`<div class="rqs">${list.map(r=>{const u=r.urgency||'d3';const bal=isAdminView()?balOf(r):0;const adm=isAdminView();return`${adm?'<div class="rqw">':''}<button class="rq ${kc(r.status)}" data-act="open" data-id="${r.id}">
     <span class="l1"><span class="tag">${esc(r.code)}</span><span class="urg ${u}">${URG[u]?URG[u].l:''}</span>${dueTxt(r)||`<span class="time">${ago(r.updatedAt||r.createdAt)}</span>`}</span>
     <span class="r1">${r.price&&isAdminView()?`<span class="price small">${money(r.price)}</span>`:''}${pill(r.status)}</span>
     <span class="t1">${esc(titleOf(r))}</span>
     <span class="t2"><span>${r.car&&r.car!=='—'?esc(r.car)+' '+esc(r.year||''):'<span class="muted">мошин номаълум</span>'}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker&&!SOLD.includes(r.status)?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}${showWorker&&SOLD.includes(r.status)?`<span class="who ${r.orderWorkerId?'':'none'}">Заказ: ${r.orderWorkerId?esc(uname(r.orderWorkerId))+' · '+esc(OST[r.ordStage]||OST.assigned):'масъул нест'}</span>`:''}</span>
-  </button>`}).join('')}</div>`;
+  </button>${adm?`${S.confirmDel===r.id?`<div class="rqconf"><span>№${esc(r.code)}-ро тамоман нест кунам?</span><button class="btn bad" data-act="delreq" data-id="${r.id}">Ҳа, нест кун</button><button class="btn" data-act="delno">Не</button></div>`:`<button class="rqdel" data-act="delreq" data-id="${r.id}" aria-label="Нест кардан" title="Нест кардан">${IC('<path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/>',17)}</button>`}</div>`:''}`}).join('')}</div>`;
 }
 const WD=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'],MO=['январ','феврал','март','апрел','май','июн','июл','август','сентябр','октябр','ноябр','декабр'];
 const todayTxt=()=>{const d=new Date();return WD[d.getDay()]+', '+d.getDate()+' '+MO[d.getMonth()]};
