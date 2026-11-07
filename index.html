@@ -594,6 +594,35 @@ s.oldc{font:12px var(--mono);color:var(--muted)}
 .wselw{position:relative;cursor:pointer}
 .wsel-x{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-size:14px}
 .wselw .wstat-top,.wselw>div>:first-child{padding-right:34px}
+
+/* worker card v2 */
+.wc{display:flex;flex-direction:column;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);background:linear-gradient(160deg,color-mix(in srgb,var(--primary) 9%,var(--surface)),var(--surface) 60%);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+button.wc{cursor:pointer}
+.wh2{display:flex;align-items:center;gap:12px}
+.av2{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;font:700 16px var(--display);color:var(--ink);background:var(--surface2);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--rc)}
+.wh2-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.wh2-t>b{font:700 18px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wtags{display:flex;flex-wrap:wrap;gap:4px}
+.wtags span{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ring{position:relative;width:56px;height:56px;flex:none}
+.ring>span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.ring b{font:700 13px var(--mono)}
+.ring small{font-size:8.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.wtiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.wt{position:relative;background:var(--surface2);border-radius:12px;padding:10px 6px 8px;text-align:center;overflow:hidden;display:flex;flex-direction:column;gap:2px}
+.wt::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--c)}
+.wt b{font:700 20px var(--display);color:var(--c)}
+.wt span{font-size:10.5px;color:var(--muted);font-weight:600;line-height:1.2}
+.wbar2{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--surface2)}
+.wbar2 i{display:block;height:100%}
+.wm2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wm2>div{background:var(--surface2);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.wm2 span{font-size:11px;color:var(--muted);font-weight:600}
+.wm2 b{font:700 17px var(--mono)}
+.wm2 b small{font-size:11px;color:var(--muted)}
+.wm2 .p b{color:var(--ok)}
+.wselw .wh2{padding-right:38px}
+.wselw .wsel-x{top:14px;right:14px}
 </style>
 </head>
 <body>
@@ -894,12 +923,17 @@ function crew(){
     <div class="pipe-wrap"><div class="pipe">${w.map(([id,u])=>crewBtn(id,u,S.fWorker===id,'fw')).join('')}<button class="crew ${S.fWorker==='none'?'on':''} ${none?'warn':''}" data-act="fw" data-v="none"><span class="av">?</span><span><b>Бе масъул</b><small>${none} дархост</small></span></button></div></div></div>`;
 }
 function wCard(id,u,from,clickable){
-  const s=wStats(id,from),t=Math.max(1,s.found+s.open+s.nf);
-  const open=clickable?`<button class="wstat" data-act="wopen" data-v="${id}">`:`<div class="wstat">`;
-  return`${open}<div class="wh"><span class="av">${esc(initials(u.name))}</span><div><b>${esc(u.name)}</b><small>${esc(GRPS[u.group]||'')} · ${s.total} дархост · миёна ${hrs(s.avg)} барои ёфтан</small></div><span class="rate">${s.rate===null?'—':s.rate+'%'}<small>ёфтан</small></span></div>
-    <div class="wnums"><div class="f"><b>${s.found}</b><span>Ёфт кард</span></div><div class="o"><b>${s.open}</b><span>То ҳол наёфта</span></div><div class="x"><b>${s.nf}</b><span>Ёфт нашуд</span></div><div class="${s.late?'x':''}"><b>${s.late}</b><span>Мӯҳлат гузашт</span></div></div>
-    <div class="wbar"><i style="width:${s.found/t*100}%;background:var(--ok)"></i><i style="width:${s.open/t*100}%;background:var(--warn)"></i><i style="width:${s.nf/t*100}%;background:var(--bad)"></i></div>
-    <div class="wmoney"><div><span>Фурӯхта · ${s.sold}</span><b>${num(s.rev)} ${esc(C.cur)}</b></div><div class="p"><span>Фоида аз ёфтаҳояш</span><b>${num(s.profit)} ${esc(C.cur)}</b></div></div>${clickable?'</button>':'</div>'}`;
+  const s=wStats(id,from),t=Math.max(1,s.found+s.open+s.nf),rate=s.rate;
+  const rc=rate===null?'var(--line)':rate>=70?'var(--ok)':rate>=40?'var(--warn)':'var(--bad)';
+  const C2=2*Math.PI*22,dash=rate===null?0:C2*rate/100;
+  const open=clickable?`<button class="wc wstat" data-act="wopen" data-v="${id}">`:`<div class="wc wstat">`;
+  const tile=(n,l,c)=>`<div class="wt" style="--c:${c}"><b>${n}</b><span>${l}</span></div>`;
+  return`${open}<div class="wh2"><span class="av2" style="--rc:${rc}">${esc(initials(u.name))}</span>
+      <div class="wh2-t"><b>${esc(u.name)}</b><div class="wtags"><span>${esc(GRPS[u.group]||'—')}</span><span>${s.total} дархост</span>${s.avg!=null?`<span>⏱ ${hrs(s.avg)}</span>`:''}</div></div>
+      <div class="ring"><svg viewBox="0 0 52 52" width="56" height="56"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="26" cy="26" r="22" fill="none" stroke="${rc}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${dash} ${C2}" transform="rotate(-90 26 26)"/></svg><span><b>${rate===null?'—':rate+'%'}</b><small>ёфтан</small></span></div></div>
+    <div class="wtiles">${tile(s.found,'Ёфт кард','var(--ok)')}${tile(s.open,'Дар кор','var(--warn)')}${tile(s.nf,'Ёфт нашуд','var(--bad)')}${tile(s.late,'Мӯҳлат гузашт',s.late?'var(--bad)':'var(--muted)')}</div>
+    <div class="wbar2"><i style="width:${s.found/t*100}%;background:var(--ok)"></i><i style="width:${s.open/t*100}%;background:var(--warn)"></i><i style="width:${s.nf/t*100}%;background:var(--bad)"></i></div>
+    <div class="wm2"><div><span>Фурӯхта · ${s.sold}</span><b>${num(s.rev)} <small>${esc(C.cur)}</small></b></div><div class="p"><span>Фоида</span><b>${num(s.profit)} <small>${esc(C.cur)}</small></b></div></div>${clickable?'</button>':'</div>'}`;
 }
 function comBox(wid){
   const l=S.reqs.filter(r=>hasCom(r)&&comWorker(r)===wid),pend=S.reqs.filter(r=>comElig(r)&&!hasCom(r)&&comWorker(r)===wid);
