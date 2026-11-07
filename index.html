@@ -565,6 +565,31 @@ s.oldc{font:12px var(--mono);color:var(--muted)}
 .rp-chips .st{height:32px;font-size:13px;padding:0 10px}
 .rp-chips .st b{min-width:20px;height:20px;font-size:11.5px}
 .rpanel .search{margin:0}
+
+.pickb{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;align-items:center;text-align:left;gap:1px 6px;min-width:0;border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:7px 10px;cursor:pointer;color:var(--ink);font:inherit}
+.pickb small{grid-column:1;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pickb span{grid-column:1;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pickb svg{grid-column:2;grid-row:1/3;color:var(--muted)}
+.pickb.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.pk-bg{position:fixed;inset:0;z-index:60;background:rgba(3,8,18,.6);backdrop-filter:blur(2px);animation:fade .15s}
+.pk{position:fixed;left:0;right:0;bottom:0;z-index:61;max-width:560px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;padding:8px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -20px 50px rgba(0,0,0,.45);animation:up .2s ease-out;max-height:75vh;display:flex;flex-direction:column}
+.pk .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 6px}
+.pk-h{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 10px;border-bottom:1px solid var(--line)}
+.pk-h h3{font:700 18px var(--display);text-transform:none;letter-spacing:0;color:var(--ink);margin:0}
+.pk-list{overflow:auto;display:flex;flex-direction:column;gap:6px;padding-top:10px}
+.pk-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid transparent;background:var(--surface2);border-radius:14px;padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit}
+.pk-row.on{border-color:var(--brass);background:color-mix(in srgb,var(--brass) 10%,var(--surface2))}
+.pk-row .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--primary-soft);color:var(--primary);font:700 14px var(--display)}
+.pk-row .av.warn{background:var(--warn-bg,rgba(240,180,60,.15));color:var(--warn)}
+.pk-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.pk-t b{font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk-t small{color:var(--muted);font-size:12.5px}
+.pk-n{display:flex;flex-direction:column;align-items:center;font:700 16px var(--mono);color:var(--ink);min-width:44px}
+.pk-n small{font:600 10px var(--body);color:var(--muted)}
+.pk-n.z{color:var(--muted)}
+.pk-c{width:22px;text-align:center;color:var(--brass);font-weight:800;font-size:17px}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 </style>
 </head>
 <body>
@@ -836,11 +861,26 @@ function adminView(){
   const chips=items.filter(([k,,n])=>n>0||k===S.fStatus||k==='active'||k==='all');
   const panel=`<div class="card rpanel"><div class="rp-h"><h3>Дархостҳо</h3><span class="small muted">${list.length} нишон дода шуд</span></div>
     ${searchBox('Ҷустуҷӯ: рақам, код, мошин, муштарӣ')}
-    <div class="rp-f"><label><span>Масъул</span><select data-act="fwsel" aria-label="Масъул">${wOpts.map(([k,l])=>`<option value="${k}" ${S.fWorker===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
-      <label><span>Гурӯҳ</span><select id="fg" data-act="fgsel" aria-label="Гурӯҳ">${[['all','Ҳама гурӯҳҳо'],['new',C.g1||'Нав'],['used',C.g2||'Кӯҳна'],['none','Бе гурӯҳ']].map(([k,l])=>`<option value="${k}" ${S.fGroup===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label></div>
+    <div class="rp-f">${pickBtn('Масъул',S.fWorker==='all'?'Ҳамаи коргарон':S.fWorker==='none'?'Бе масъул':uname(S.fWorker),'worker',S.fWorker!=='all')}${pickBtn('Гурӯҳ',GOPTS().find(x=>x[0]===S.fGroup)?.[1]||'Ҳама гурӯҳҳо','group',S.fGroup!=='all')}</div>
     <div class="rp-chips">${chips.map(([k,l,n,kk])=>`<button class="st ${S.fStatus===k?'on':''} ${kk||''}" data-act="fs" data-v="${k}"><i></i>${esc(l)}<b>${n}</b></button>`).join('')}</div>
     ${w.length?'':'<div class="note">Коргар нест. Дар қисми <b>Одамон</b> коргаронро бо логин ва парол илова кунед.</div>'}</div>`;
   return tabs+kpis()+alert+wsel+(S.newReq?newReqForm(true):'')+panel+`<div id="list-anchor"></div>`+cards(list,true)+`<button class="fab" data-act="newreq" aria-label="Дархости нав">+</button>`;
+}
+const GOPTS=()=>[['all','Ҳама гурӯҳҳо'],['new',C.g1||'Нав'],['used',C.g2||'Кӯҳна'],['none','Бе гурӯҳ']];
+function pickBtn(lbl,cur,k,on){return`<button class="pickb ${on?'on':''}" data-act="pick" data-v="${k}"><small>${lbl}</small><span>${esc(cur)}</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>`}
+function pickerView(){
+  if(!S.pick||view()!=='admin')return'';
+  let title,rows;
+  if(S.pick==='worker'){
+    const w=workers(),none=S.reqs.filter(r=>ACTIVE.includes(r.status)&&!r.workerId).length,all=S.reqs.filter(r=>ACTIVE.includes(r.status)).length;
+    title='Масъул';
+    rows=[['all','Ҳамаи коргарон','Ҳама дархостҳо',all,'∗'],...w.map(([id,u])=>[id,u.name,GRPS[u.group]||'',loadOf(id),initials(u.name)]),['none','Бе масъул','Ба касе супорида нашуд',none,'?']]
+      .map(([k,l,sub,n,av])=>`<button class="pk-row ${S.fWorker===k?'on':''}" data-act="pickv" data-k="fWorker" data-v="${k}"><span class="av ${k==='none'&&n?'warn':''}">${esc(av)}</span><span class="pk-t"><b>${esc(l)}</b><small>${esc(sub)}</small></span><span class="pk-n ${n?'':'z'}">${n}<small>дар кор</small></span><span class="pk-c">${S.fWorker===k?'✓':''}</span></button>`).join('');
+  }else{
+    title='Гурӯҳ';
+    rows=GOPTS().map(([k,l])=>{const n=S.reqs.filter(r=>ACTIVE.includes(r.status)&&(k==='all'||(k==='none'?!r.group:r.group===k))).length;return`<button class="pk-row ${S.fGroup===k?'on':''}" data-act="pickv" data-k="fGroup" data-v="${k}"><span class="av">${k==='all'?'∗':k==='none'?'–':esc(l[0])}</span><span class="pk-t"><b>${esc(l)}</b></span><span class="pk-n ${n?'':'z'}">${n}<small>фаъол</small></span><span class="pk-c">${S.fGroup===k?'✓':''}</span></button>`}).join('');
+  }
+  return`<div class="pk-bg" data-act="pickclose"></div><div class="pk" role="dialog" aria-label="${title}"><div class="grab"></div><div class="pk-h"><h3>${title}</h3><button class="iconbtn" data-act="pickclose" aria-label="Пӯшидан">✕</button></div><div class="pk-list">${rows}</div></div>`;
 }
 function crew(){
   const w=workers();
@@ -1247,7 +1287,7 @@ function render(){
   const f=document.activeElement&&document.activeElement.id;
   const sc=app.querySelector('.sheet')?.scrollTop||0;
   const opn=[...app.querySelectorAll('details[id]')].filter(d=>d.open).map(d=>d.id);
-  app.innerHTML=header()+`<main class="wrap">${body()}</main>`+sheet()+(S.lb?`<div class="lb" data-act="lbclose"><img data-pid="${esc(S.lb)}" src="${S.ph[S.lb]||PH_PLACE}" alt="Акс"></div>`:'')+invoiceView()+(S.toast?`<div class="toast" role="status">${esc(S.toast)}</div>`:'');
+  app.innerHTML=header()+`<main class="wrap">${body()}</main>`+sheet()+(S.lb?`<div class="lb" data-act="lbclose"><img data-pid="${esc(S.lb)}" src="${S.ph[S.lb]||PH_PLACE}" alt="Акс"></div>`:'')+invoiceView()+pickerView()+(S.toast?`<div class="toast" role="status">${esc(S.toast)}</div>`:'');
   for(const id in keep){const e=document.getElementById(id);if(!e)continue;if(e.type==='radio'||e.type==='checkbox')e.checked=keep[id];else e.value=keep[id]}
   if(files&&files.length){const e=document.getElementById('n-photo');if(e){try{e.files=files}catch(_){}const n=document.getElementById('n-photo-n');if(n)n.textContent=files.length+' акс интихоб шуд'}}
   const sh=app.querySelector('.sheet');if(sh)sh.scrollTop=sc;
@@ -1433,6 +1473,9 @@ document.addEventListener('click',async e=>{
       if(before===after){render();return}
       await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
+    case'pick':S.pick=b.dataset.v;render();return;
+    case'pickclose':S.pick=null;render();return;
+    case'pickv':S[b.dataset.k]=b.dataset.v;S.pick=null;render();return;
     case'invclose':S.inv=null;render();return;
     case'invprint':window.print();return;
     case'cpctq':{const el=document.getElementById('c-pct-'+b.dataset.id);if(el){el.value=b.dataset.v;el.dispatchEvent(new Event('input',{bubbles:true}))}return}
