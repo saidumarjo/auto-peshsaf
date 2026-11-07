@@ -458,6 +458,10 @@ code.pc{font:600 12px var(--mono);background:var(--surface2);border:1px solid va
 .stepper{display:flex;align-items:center;gap:4px;flex:none}
 .stepper button{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;font-weight:700;cursor:pointer}
 .simple-f .stepper input{width:48px;min-height:36px;height:36px;text-align:center;padding:0;font-size:15px}
+
+.inm{font-weight:400;color:var(--muted);font-size:.9em}
+.it code.pc{font-size:14px;padding:1px 6px}
+.sheet .ttl{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -545,8 +549,9 @@ const initials=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).joi
 const kc=s=>'k-'+((ST[s]||{}).k||'a');
 const pill=s=>`<span class="pill ${kc(s)}">${esc((ST[s]||{l:s}).l)}</span>`;
 const itemsOf=r=>Array.isArray(r.items)&&r.items.length?r.items:[{n:r.parts||'',q:r.qty||1,price:r.price||null,off:false}];
-const inm=i=>(i.n||'')+(i.code&&i.code!==i.n?' ('+i.code+')':'');
-const inmH=i=>`${esc(i.n||'')}${i.code&&i.code!==i.n?` <code class="pc">${esc(i.code)}</code>`:''}`;
+const inm=i=>i.code?i.code+(i.n&&i.n!==i.code?' — '+i.n:''):(i.n||'');
+const inmH=i=>i.code?`<code class="pc">${esc(i.code)}</code>${i.n&&i.n!==i.code?` <span class="inm">${esc(i.n)}</span>`:''}`:esc(i.n||'');
+const titleOf=r=>{const a=itemsOf(r).filter(i=>!i.off);if(a.length<=2)return itemsTxt(r);return a.length+' қисм: '+a.slice(0,2).map(i=>i.code||i.n).join(', ')+' +'+(a.length-2)};
 const itemsTxt=r=>itemsOf(r).filter(i=>!i.off).map(i=>inm(i)+(i.q>1?' × '+i.q:'')).join(', ');
 const paidOf=r=>(r.payments||[]).reduce((a,p)=>a+(+p.a||0),0);
 const balOf=r=>SOLD.includes(r.status)?Math.max(0,Math.round(((+r.price||0)-paidOf(r))*100)/100):0;
@@ -657,7 +662,7 @@ function cards(list,showWorker){
   return`<div class="rqs">${list.map(r=>{const u=r.urgency||'d3';const bal=isAdminView()?balOf(r):0;return`<button class="rq ${kc(r.status)}" data-act="open" data-id="${r.id}">
     <span class="l1"><span class="tag">${esc(r.code)}</span><span class="urg ${u}">${URG[u]?URG[u].l:''}</span>${dueTxt(r)||`<span class="time">${ago(r.updatedAt||r.createdAt)}</span>`}</span>
     <span class="r1">${r.price&&isAdminView()?`<span class="price small">${money(r.price)}</span>`:''}${pill(r.status)}</span>
-    <span class="t1">${esc(itemsTxt(r))}</span>
+    <span class="t1">${esc(titleOf(r))}</span>
     <span class="t2"><span>${esc(r.car)} ${esc(r.year)}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker&&!SOLD.includes(r.status)?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}${showWorker&&SOLD.includes(r.status)?`<span class="who ${r.orderWorkerId?'':'none'}">Заказ: ${r.orderWorkerId?esc(uname(r.orderWorkerId))+' · '+esc(OST[r.ordStage]||OST.assigned):'масъул нест'}</span>`:''}</span>
   </button>`}).join('')}</div>`;
 }
@@ -765,7 +770,7 @@ function debtView(){
   return`<div class="kpi"><span>Ҳамагӣ қарзи муштариён · ${groups.length} нафар</span><b style="color:var(--bad)">${money(total)}</b></div>`+groups.map(({l,sum})=>{const r0=l[0],ph=custPhone(r0);
     const msg=`Ассалому алайкум, ${custName(r0)}! Аз заказҳо боқимонда: ${money(sum)}.\n${l.map(r=>'№'+r.code+' — '+money(balOf(r))).join('\n')}\n${C.name}`;
     return`<div class="card dgroup"><div class="dhead"><span class="av">${esc(initials(custName(r0)))}</span><div><b>${esc(custName(r0))}</b><div class="small muted">${esc(ph||'бе телефон')}</div></div><b class="price">${money(sum)}</b></div>
-      ${l.map(r=>`<button class="rq ${kc(r.status)}" data-act="open" data-id="${r.id}" style="box-shadow:none"><span class="l1"><span class="tag">${esc(r.code)}</span><span class="time">${fdate(r.createdAt)}</span></span><span class="r1"><span class="price small" style="color:var(--bad)">${money(balOf(r))}</span></span><span class="t1">${esc(itemsTxt(r))}</span><span class="t2"><span>Ҷамъ ${money(r.price)}</span><span>Пардохт ${money(paidOf(r))}</span></span></button>`).join('')}
+      ${l.map(r=>`<button class="rq ${kc(r.status)}" data-act="open" data-id="${r.id}" style="box-shadow:none"><span class="l1"><span class="tag">${esc(r.code)}</span><span class="time">${fdate(r.createdAt)}</span></span><span class="r1"><span class="price small" style="color:var(--bad)">${money(balOf(r))}</span></span><span class="t1">${esc(titleOf(r))}</span><span class="t2"><span>Ҷамъ ${money(r.price)}</span><span>Пардохт ${money(paidOf(r))}</span></span></button>`).join('')}
       ${ph?`<div><a class="btn" href="${waLink(ph,msg)}" target="_blank" rel="noopener">Ёдрас дар WhatsApp</a></div>`:''}</div>`}).join('');
 }
 function settingsView(){
@@ -1016,7 +1021,7 @@ function sheet(){
   const wa=`<details class="card dt" data-k="wa" ${S.det.wa?'open':''}><summary><h3>Матн барои паставшик (WhatsApp)</h3></summary><div class="wa" id="wa-${r.id}">${esc(waText(r))}</div><div class="bar"><button class="btn" data-act="copy" data-id="${r.id}">Нусха гирифтан</button><a class="btn" href="https://wa.me/?text=${encodeURIComponent(waText(r))}" target="_blank" rel="noopener">WhatsApp кушодан</a></div></details>`;
   const logs=r.log.concat(r.plog).sort((a,b)=>b.t-a.t);
   const log=`<details class="card dt" data-k="log" ${S.det.log?'open':''}><summary><h3>Таърих</h3></summary><ul class="log">${logs.map(l=>`<li><time>${fmt(l.t)}</time><span>${esc(l.s)} <span class="muted">· ${esc(uname(l.by))}</span></span></li>`).join('')}</ul></details>`;
-  return`<div class="sheet-bg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="sheet-h"><span class="tag">${esc(r.code)}</span>${pill(r.status)}<span class="urg ${r.urgency||'d3'}">${URG[r.urgency||'d3'].l}</span><button class="x" data-act="close" aria-label="Пӯшидан">×</button><div class="ttl">${esc(itemsTxt(r))}</div></div>
+  return`<div class="sheet-bg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="sheet-h"><span class="tag">${esc(r.code)}</span>${pill(r.status)}<span class="urg ${r.urgency||'d3'}">${URG[r.urgency||'d3'].l}</span><button class="x" data-act="close" aria-label="Пӯшидан">×</button><div class="ttl">${esc(titleOf(r))}</div></div>
     <div class="card">${info}</div><div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div><div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
 }
 
