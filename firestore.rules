@@ -80,7 +80,7 @@ service cloud.firestore {
       allow update: if isAdmin()
         || ((mineW(resource.data) || openW(resource.data))
             && request.resource.data.workerId == wid()
-            && onlyKeys(['workerId', 'status', 'assignedAt', 'foundAt', 'photos', 'updatedAt', 'log'])
+            && onlyKeys(['workerId', 'status', 'assignedAt', 'foundAt', 'photos', 'items', 'parts', 'updatedAt', 'log'])
             && request.resource.data.status in ['assigned', 'searching', 'found', 'notfound'])
         || (mineO(resource.data)
             && request.resource.data.orderWorkerId == resource.data.orderWorkerId

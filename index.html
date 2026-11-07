@@ -520,6 +520,10 @@ code.pc{font:600 12px var(--mono);background:var(--surface2);border:1px solid va
 .inv .inv-no b{color:#14213a}
 .inv .inv-sum span{color:#14213a}
 .inv .inv-sum .due b{color:#b3261e}
+
+.itbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--primary);font-size:15px;cursor:pointer;flex:none}
+.it-ed{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--primary);border-radius:12px;background:var(--surface2)}
+s.oldc{font:12px var(--mono);color:var(--muted)}
 </style>
 </head>
 <body>
@@ -615,7 +619,7 @@ const kc=s=>'k-'+((ST[s]||{}).k||'a');
 const pill=s=>`<span class="pill ${kc(s)}">${esc((ST[s]||{l:s}).l)}</span>`;
 const itemsOf=r=>Array.isArray(r.items)&&r.items.length?r.items:[{n:r.parts||'',q:r.qty||1,price:r.price||null,off:false}];
 const inm=i=>i.code?i.code+(i.n&&i.n!==i.code?' — '+i.n:''):(i.n||'');
-const inmH=i=>i.code?`<code class="pc">${esc(i.code)}</code>${i.n&&i.n!==i.code?` <span class="inm">${esc(i.n)}</span>`:''}`:esc(i.n||'');
+const inmH=i=>i.code?`${i.oldCode&&i.oldCode!==i.code?`<s class="oldc">${esc(i.oldCode)}</s> → `:''}<code class="pc">${esc(i.code)}</code>${i.n&&i.n!==i.code?` <span class="inm">${esc(i.n)}</span>`:''}`:esc(i.n||'');
 const titleOf=r=>{const a=itemsOf(r).filter(i=>!i.off);if(a.length<=2)return itemsTxt(r);return a.length+' қисм: '+a.slice(0,2).map(i=>i.code||i.n).join(', ')+' +'+(a.length-2)};
 const itemsTxt=r=>itemsOf(r).filter(i=>!i.off).map(i=>inm(i)+(i.q>1?' × '+i.q:'')).join(', ');
 const paidOf=r=>(r.payments||[]).reduce((a,p)=>a+(+p.a||0),0);
@@ -1057,7 +1061,13 @@ function sheet(){
   const info=`<dl class="kv"><dt>${esc(C.f1s)}</dt><dd>${esc(r.car)} ${esc(r.year)}</dd><dt>${esc(C.f3)}</dt><dd style="font-family:var(--mono)">${r.vin?esc(r.vin)+(C.f3len&&r.vin.length!==C.f3len?' <span class="warn-note">('+C.f3len+' рамз нест)</span>':''):'<span class="warn-note">нест</span>'}</dd><dt>Намуд</dt><dd>${esc(COND[r.condition]||'—')}</dd><dt>Мӯҳлат</dt><dd>${URG[r.urgency||'d3'].l} · ${fmt(deadline(r))} ${dueTxt(r)}</dd>${r.note?`<dt>Эзоҳ</dt><dd>${esc(r.note)}</dd>`:''}
     ${adm?`<dt>Муштарӣ</dt><dd>${esc(custName(r))} ${custPhone(r)?'· <span style="font-family:var(--mono)">'+esc(custPhone(r))+'</span>':''}</dd>`:''}
     <dt>Масъул</dt><dd>${r.workerId?`<b>${esc(uname(r.workerId))}</b>`:'<span class="who none">таъин нашуд</span>'}${r.assignedAt&&r.foundAt?` · ёфт дар ${hrs((r.foundAt-r.assignedAt)/36e5)}`:''}</dd>${r.workerNote?`<dt>Эзоҳи коргар</dt><dd>${esc(r.workerNote)}</dd>`:''}${r.returnReason?`<dt>Сабаби бозгашт</dt><dd>${esc(r.returnReason)}</dd>`:''}</dl>`;
-  const itemsBox=`<div class="items">${its.map(it=>`<div class="it ${it.off?'off':''}"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span>${adm&&it.price?`<span class="price small">${money(it.price)}</span>`:''}</div>`).join('')}</div>`;
+  const canEd=adm||(isMine&&['assigned','searching','found'].includes(r.status));
+  const ed=S.editIt&&S.editIt.id===r.id?S.editIt.i:-1;
+  const itemsBox=`<div class="items">${its.map((it,i)=>i===ed?`<div class="it-ed"><div class="small muted">Код ё номро иваз кунед. Коди кӯҳна нигоҳ дошта мешавад.</div>
+      <input id="ie-code" value="${esc(it.code||'')}" placeholder="Коди нав" autocapitalize="characters" spellcheck="false" style="font-family:var(--mono)">
+      <div class="irow"><input id="ie-name" value="${esc(it.n&&it.n!==it.code?it.n:'')}" placeholder="Ном (ихтиёрӣ)"><input id="ie-q" type="number" min="1" value="${it.q||1}" aria-label="Миқдор"></div>
+      <div class="bar"><button class="btn pri" data-act="itsave" data-id="${r.id}" data-v="${i}">Сабт</button><button class="btn" data-act="itcancel">Бекор</button></div></div>`
+    :`<div class="it ${it.off?'off':''}"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span><span class="bar">${adm&&it.price?`<span class="price small">${money(it.price)}</span>`:''}${canEd&&!it.off?`<button class="itbtn" data-act="itedit" data-id="${r.id}" data-v="${i}" aria-label="Иваз кардан" title="Иваз кардан">✎</button>`:''}</span></div>`).join('')}</div>`;
   const photos=`<div class="bar">${photosHtml(r)||'<span class="small muted">Акс нест.</span>'}</div>${(adm||isMine)?uplBtn(r.id,'Акс илова кардан'):''}`;
   const mg=adm&&(r.cost||r.price)?`<div class="bal"><div><span>Харид${r.supplier?' · '+esc(r.supplier):''}</span><b>${money(r.cost)}</b></div><div><span>Фурӯш</span><b>${money(r.price)}</b></div>${r.cost&&r.price?`<div class="ok-b"><span>Фоида</span><b>${money(r.price-r.cost)}</b></div>`:''}</div>`:'';
   let act='';
@@ -1334,6 +1344,18 @@ document.addEventListener('click',async e=>{
     case'qclose':S.qOpen=null;break;
     case'lb':S.lb=b.dataset.v;break;
     case'lbclose':S.lb=null;break;
+    case'itedit':S.editIt={id,i:+b.dataset.v};render();setTimeout(()=>{const x=document.getElementById('ie-code');if(x){x.focus();x.select()}},30);return;
+    case'itcancel':S.editIt=null;render();return;
+    case'itsave':{if(!r)return;const i=+b.dataset.v;const src=S.rawReqs[id]||(S.extra||{})[id]||(S.extraO||{})[id]||r;const raw=itemsOf(src).map(x=>({...x}));const it=raw[i];if(!it)return;
+      const code=val('ie-code').toUpperCase().replace(/\s+/g,' ').trim(),name=val('ie-name'),q=Math.max(1,parseInt(val('ie-q'))||1);
+      if(!code&&!name){toast('Код ё номро нависед');return}
+      const before=inm(it)+(it.q>1?' × '+it.q:'');
+      if(code&&it.code&&code!==it.code&&!it.oldCode)it.oldCode=it.code;
+      if(code)it.code=code;else delete it.code;if(it.oldCode===it.code)delete it.oldCode;
+      it.n=name||code;it.q=q;
+      const after=inm(it)+(q>1?' × '+q:'');S.editIt=null;
+      if(before===after){render();return}
+      await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
     case'invclose':S.inv=null;render();return;
     case'invprint':window.print();return;
