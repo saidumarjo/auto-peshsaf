@@ -1148,11 +1148,11 @@ setInterval(()=>{const ae=document.activeElement;if(!ae||ae===document.body)rend
 
 /* ===== data subscriptions ===== */
 function stopAll(){unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={};S.extra={};S.extraO={};S.privsO={};S.privs={};S.workers={};S.customers={}}
-function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);toast('Маълумот бор нашуд ('+errTxt(err)+')')}))}
+function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);if(fn.fail)fn.fail();if(!sub.warned){sub.warned=true;toast('Қисме аз маълумот бор нашуд ('+errTxt(err)+'). Қоидаҳои Firebase-ро санҷед.')}}))}
 function waitAll(n){let left=n;S.ready=false;const t=setTimeout(()=>{S.slow=true;render()},10000);return()=>{if(--left<=0){clearTimeout(t);S.ready=true;S.slow=false}rebuild();render()}}
 function startAdmin(){
   stopAll();const done=waitAll(4);
-  const firstOnce=f=>{let first=true;return s=>{f(s);if(first){first=false;done()}else{rebuild();render()}}};
+  const firstOnce=f=>{let first=true;const h=s=>{f(s);if(first){first=false;done()}else{rebuild();render()}};h.fail=()=>{if(first){first=false;done()}};return h};
   sub(query(collection(db,'requests'),orderBy('createdAt','desc'),limit(1500)),firstOnce(s=>{S.rawReqs={};s.forEach(d=>S.rawReqs[d.id]=d.data())}),'requests');
   sub(collection(db,'priv'),firstOnce(s=>{S.privs={};s.forEach(d=>S.privs[d.id]=d.data())}),'priv');
   sub(collection(db,'workers'),firstOnce(s=>{S.workers={};s.forEach(d=>S.workers[d.id]=d.data())}),'workers');
@@ -1160,7 +1160,7 @@ function startAdmin(){
 }
 function startWorker(wid){
   stopAll();S.wid=wid;const done=waitAll(6);
-  const firstOnce=f=>{let first=true;return s=>{f(s);if(first){first=false;done()}else{rebuild();render()}}};
+  const firstOnce=f=>{let first=true;const h=s=>{f(s);if(first){first=false;done()}else{rebuild();render()}};h.fail=()=>{if(first){first=false;done()}};return h};
   sub(query(collection(db,'requests'),where('workerId','==',wid)),firstOnce(s=>{S.rawReqs={};s.forEach(d=>S.rawReqs[d.id]=d.data())}),'my requests');
   sub(query(collection(db,'requests'),where('status','==','assigned'),where('workerId','==',null)),firstOnce(s=>{S.extra={};s.forEach(d=>S.extra[d.id]=d.data())}),'open requests');
   sub(query(collection(db,'priv'),where('workerId','==',wid)),firstOnce(s=>{S.privs={};s.forEach(d=>S.privs[d.id]=d.data())}),'priv');
@@ -1170,7 +1170,7 @@ function startWorker(wid){
 }
 async function startCustomer(cidv){
   stopAll();S.cid=cidv;const done=waitAll(2);
-  const firstOnce=f=>{let first=true;return s=>{f(s);if(first){first=false;done()}else{rebuild();render()}}};
+  const firstOnce=f=>{let first=true;const h=s=>{f(s);if(first){first=false;done()}else{rebuild();render()}};h.fail=()=>{if(first){first=false;done()}};return h};
   sub(query(collection(db,'requests'),where('customerId','==',cidv)),firstOnce(s=>{S.rawReqs={};s.forEach(d=>S.rawReqs[d.id]=d.data())}),'my requests');
   sub(doc(db,'customers',cidv),firstOnce(s=>{S.customers={};if(s.exists())S.customers[cidv]=s.data()}),'me');
 }
