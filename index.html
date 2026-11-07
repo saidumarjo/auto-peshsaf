@@ -462,6 +462,13 @@ code.pc{font:600 12px var(--mono);background:var(--surface2);border:1px solid va
 .inm{font-weight:400;color:var(--muted);font-size:.9em}
 .it code.pc{font-size:14px;padding:1px 6px}
 .sheet .ttl{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+
+.whero .hero-top{align-items:center}
+.hall{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--hero-line);background:var(--hero-tile);color:var(--hero-ink);border-radius:12px;padding:9px 12px;font:600 13.5px var(--body);cursor:pointer}
+.hall b{margin-left:auto;font:700 15px var(--mono)}
+.hall.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.hk.pulse .hi{background:var(--brass);color:var(--hero1)}
+.wsec{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 2px -4px}
 </style>
 </head>
 <body>
@@ -671,7 +678,7 @@ function cards(list,showWorker){
     <span class="l1"><span class="tag">${esc(r.code)}</span><span class="urg ${u}">${URG[u]?URG[u].l:''}</span>${dueTxt(r)||`<span class="time">${ago(r.updatedAt||r.createdAt)}</span>`}</span>
     <span class="r1">${r.price&&isAdminView()?`<span class="price small">${money(r.price)}</span>`:''}${pill(r.status)}</span>
     <span class="t1">${esc(titleOf(r))}</span>
-    <span class="t2"><span>${esc(r.car)} ${esc(r.year)}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker&&!SOLD.includes(r.status)?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}${showWorker&&SOLD.includes(r.status)?`<span class="who ${r.orderWorkerId?'':'none'}">Заказ: ${r.orderWorkerId?esc(uname(r.orderWorkerId))+' · '+esc(OST[r.ordStage]||OST.assigned):'масъул нест'}</span>`:''}</span>
+    <span class="t2"><span>${r.car&&r.car!=='—'?esc(r.car)+' '+esc(r.year||''):'<span class="muted">мошин номаълум</span>'}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker&&!SOLD.includes(r.status)?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}${showWorker&&SOLD.includes(r.status)?`<span class="who ${r.orderWorkerId?'':'none'}">Заказ: ${r.orderWorkerId?esc(uname(r.orderWorkerId))+' · '+esc(OST[r.ordStage]||OST.assigned):'масъул нест'}</span>`:''}</span>
   </button>`}).join('')}</div>`;
 }
 const WD=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'],MO=['январ','феврал','март','апрел','май','июн','июл','август','сентябр','октябр','ноябр','декабр'];
@@ -837,7 +844,9 @@ function workerView(){
   if(S.lastMoved&&Date.now()-S.lastMoved.t>15000)S.lastMoved=null;
   if(S.lastMoved){const lm=S.lastMoved;const k=['ord','work','done','new'].find(k=>tabs[k].some(r=>r.id===lm.id&&r.status===lm.st));if(k){S.wTab=k;S.wTabSet=false;S.lastMoved=null}}
   else if(!tabs[S.wTab].length&&!S.wTabSet){const k=['ord','new','work','done'].find(k=>tabs[k].length);if(k)S.wTab=k}
-  return head+(late?`<button class="alert" data-act="wt" data-v="work">${late} дархост мӯҳлаташ гузашт<span class="arr">→</span></button>`:'')+pipe(Object.keys(labels).map(k=>[k,labels[k][0],tabs[k].length,labels[k][1]]),S.wTab,'wt')+cards(tabs[S.wTab]||[],S.wTab==='all');
+  return `<section class="hero whero"><div class="hero-top"><div><div class="hello">${hello()}, ${esc(isAdm?uname(aw)||'':uname(S.wid)||'')}</div><div class="hdate">${todayTxt()}</div></div></div>
+    <div class="hkpis">${[['ord','sold','Заказҳо'],['new','req','Нав'],['work','work','Ҷустуҷӯ'],['done','found','Ёфтаҳо']].map(([k,ic,l])=>`<button class="hk ${S.wTab===k?'on':''} ${k==='new'&&tabs.new.length?'pulse':''}" data-act="wt" data-v="${k}"><span class="hi">${IC(ICONS[ic],18)}</span><b>${tabs[k].length}</b><span class="hl">${l}</span></button>`).join('')}</div>
+    <button class="hall ${S.wTab==='all'?'on':''}" data-act="wt" data-v="all"><span>Ҳамаи корҳои ман</span><b>${tabs.all.length}</b><span>→</span></button></section>`+head+(late?`<button class="alert" data-act="wt" data-v="work">${late} дархост мӯҳлаташ гузашт<span class="arr">→</span></button>`:'')+`<div class="wsec">${esc(labels[S.wTab]?labels[S.wTab][0]:'')}</div>`+cards(tabs[S.wTab]||[],S.wTab==='all');
 }
 
 function customerView(){
@@ -1053,7 +1062,7 @@ function render(){
   const sh=app.querySelector('.sheet');if(sh)sh.scrollTop=sc;
   opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true});
   codesList();
-  app.querySelectorAll('.pipe-wrap').forEach(w=>{const on=w.querySelector('.st.on');if(on)w.scrollLeft+=on.getBoundingClientRect().left-w.getBoundingClientRect().left-4});
+  app.querySelectorAll('.pipe-wrap').forEach(w=>{const on=w.querySelector('.st.on');if(!on)return;const a=on.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.right>b.right)w.scrollLeft+=a.right-b.right+8;else if(a.left<b.left)w.scrollLeft-=b.left-a.left+8});
   if(S.open)calcPP(S.open);
   fillPhotos();
   if(f){const e=document.getElementById(f);if(e){e.focus();if(e.id==='q'){const n=e.value.length;try{e.setSelectionRange(n,n)}catch(_){}}}}
