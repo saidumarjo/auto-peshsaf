@@ -632,6 +632,35 @@ button.wc{cursor:pointer}
 .inv-x{margin-bottom:0;position:static;flex:none}
 .inv{padding-right:20px}
 .invwrap{max-width:640px;margin:0 auto}
+
+.bnav.c5{grid-template-columns:repeat(5,1fr)}
+.bnav.c5 button span{font-size:10.5px}
+.hkpis.c3{grid-template-columns:repeat(3,1fr)}
+.clist,.ilist{display:flex;flex-direction:column;gap:8px}
+.cc{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+.cc.open{border-color:color-mix(in srgb,var(--brass) 60%,var(--line))}
+.cc-h{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;color:var(--ink);font:inherit;padding:12px;cursor:pointer}
+.cc-h .av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--primary-soft);color:var(--primary);font:700 15px var(--display)}
+.cc-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.cc-t b{font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-t small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-r{display:flex;flex-direction:column;align-items:flex-end;flex:none}
+.cc-r b{font:700 15px var(--mono)}
+.cc-r b.dbt{color:var(--bad)}
+.cc-r small{font-size:11px;color:var(--muted)}
+.cc-b{padding:0 12px 12px;display:flex;flex-direction:column;gap:10px}
+.mini{display:flex;flex-direction:column;gap:6px}
+.mrow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink);font:inherit;cursor:pointer}
+.mrow .mt{flex:1;min-width:0;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .mp{font:700 13px var(--mono)}
+.ir{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;color:var(--ink);font:inherit;cursor:pointer}
+.ir-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--brass) 15%,var(--surface2));color:var(--brass)}
+.ir-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ir-t b{font:700 14.5px var(--mono)}
+.ir-t small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ir-t .ir-p{color:var(--ink);opacity:.8}
+.ir-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.ir-r b{font:700 15px var(--mono)}
 </style>
 </head>
 <body>
@@ -698,7 +727,7 @@ const comElig=r=>SOLD.includes(r.status)&&+r.cost>0&&+r.price>0&&!!comWorker(r);
 const comSug=(r,pct)=>Math.round(Math.max(0,profitOf(r))*(pct??wPct(comWorker(r)))/100*100)/100;
 const hasCom=r=>r.com!=null&&r.com!==''&&SOLD.includes(r.status);
 const IC=(p,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-const ICONS={req:'<path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 11h6M9 15h4"/>',debt:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',rep:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6 6 0 0 0-4-5.6"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+const ICONS={cust:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',inv:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',req:'<path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 11h6M9 15h4"/>',debt:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',rep:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6 6 0 0 0-4-5.6"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   work:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',found:'<path d="M20 6 9 17l-5-5"/>',sold:'<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>',profit:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'};
 const ICON_SEARCH='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
 const ICON_CAM='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
@@ -878,13 +907,15 @@ function kpis(){
 }
 function adminView(){
   const debtN=new Set(S.reqs.filter(r=>balOf(r)>0).map(r=>r.customerId||r.customerPhone||r.id)).size;
-  const T=[['req','Дархостҳо'],['debt','Қарзҳо'],['rep','Ҳисобот'],['users','Одамон'],['set','Танзимот']];
-  const tabs=`<div class="tabs top-tabs">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${l}${k==='debt'&&debtN?`<span class="badge">${debtN}</span>`:''}</button>`).join('')}</div>
-    <nav class="bnav c4" aria-label="Менюи асосӣ">${T.filter(([k])=>k!=='set').map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='debt'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
+  if(S.adminTab==='debt'){S.adminTab='cust';S.custSeg='debt'}
+  const T=[['req','Дархостҳо'],['cust','Муштариён'],['inv','Инвойсҳо'],['rep','Ҳисобот'],['users','Одамон'],['set','Танзимот']];
+  const tabs=`<div class="tabs top-tabs">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${l}${k==='cust'&&debtN?`<span class="badge">${debtN}</span>`:''}</button>`).join('')}</div>
+    <nav class="bnav c5" aria-label="Менюи асосӣ">${T.filter(([k])=>k!=='set').map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='cust'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
   if(S.adminTab==='users')return tabs+usersView();
   if(S.adminTab==='set')return tabs+settingsView();
   if(S.adminTab==='rep')return tabs+reportView();
-  if(S.adminTab==='debt')return tabs+debtView();
+  if(S.adminTab==='cust')return tabs+custView();
+  if(S.adminTab==='inv')return tabs+invListView();
   let base=S.reqs.filter(matchQ);
   if(S.fGroup!=='all')base=base.filter(r=>S.fGroup==='none'?!r.group:r.group===S.fGroup);
   if(S.fWorker==='none')base=base.filter(r=>!r.workerId);else if(S.fWorker!=='all')base=base.filter(r=>r.workerId===S.fWorker);
@@ -992,6 +1023,43 @@ function reportView(){
   if(!ws.length)return top+`<div class="note">Коргар нест. Дар қисми «Одамон» илова кунед.</div>`;
   const sorted=ws.slice().sort((a,b)=>wStats(b[0],from).profit-wStats(a[0],from).profit);
   return top+`<div class="small muted">Тартиб аз рӯи фоида. Ба коргар пахш кунед, то ҳамаи дархостҳояшро бинед.</div><div class="wgrid-out">${sorted.map(([id,u])=>wCard(id,u,from,true)+comBox(id)).join('')}</div>`;
+}
+const ckey=r=>r.customerId||('p:'+digits(custPhone(r)||'')||r.id);
+function custGroups(){
+  const g={};
+  Object.entries(S.customers||{}).forEach(([id,c])=>{g[id]={id,name:c.name||'—',phone:c.phone||'',since:c.createdAt||0,rs:[]}});
+  S.reqs.forEach(r=>{const k=ckey(r);const x=g[k]||(g[k]={id:k,name:custName(r)||'—',phone:custPhone(r)||'',since:r.createdAt||0,rs:[]});x.rs.push(r)});
+  return Object.values(g).map(x=>{const sold=x.rs.filter(r=>SOLD.includes(r.status));return{...x,n:x.rs.length,sold:sold.length,sum:sold.reduce((a,r)=>a+(+r.price||0),0),debt:x.rs.reduce((a,r)=>a+balOf(r),0),last:Math.max(x.since||0,...x.rs.map(r=>r.updatedAt||r.createdAt||0))}});
+}
+function custView(){
+  const seg=S.custSeg||'all';
+  const segs=`<div class="seg mode" style="margin-bottom:2px"><button class="${seg==='all'?'on':''}" data-act="custseg" data-v="all">Ҳамаи муштариён</button><button class="${seg==='debt'?'on':''}" data-act="custseg" data-v="debt">Қарздорон</button></div>`;
+  if(seg==='debt')return segs+debtView();
+  const q=(S.cq2||'').toLowerCase().trim();
+  let l=custGroups().filter(c=>!q||(c.name+' '+c.phone).toLowerCase().includes(q)).sort((a,b)=>b.last-a.last);
+  const tot=custGroups();
+  const head=`<section class="hero"><div class="hero-top"><div><div class="hello">Муштариён</div><div class="hdate">${tot.length} нафар</div></div></div>
+    <div class="hkpis"><div class="hk"><b>${tot.length}</b><span class="hl">Ҳама</span></div><div class="hk"><b>${tot.filter(c=>c.sold).length}</b><span class="hl">Харидор</span></div><div class="hk"><b>${num(tot.reduce((a,c)=>a+c.sum,0))}</b><span class="hl">Фурӯш</span></div><div class="hk"><b style="color:${tot.some(c=>c.debt)?'var(--bad)':'inherit'}">${num(tot.reduce((a,c)=>a+c.debt,0))}</b><span class="hl">Қарз</span></div></div></section>`;
+  const search=`<label class="search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cq2" data-cq2 placeholder="Ҷустуҷӯ: ном ё телефон" value="${esc(S.cq2||'')}"></label>`;
+  if(!l.length)return segs+head+search+`<div class="empty"><b>Муштарӣ ёфт нашуд</b></div>`;
+  return segs+head+search+`<div class="clist">${l.map(c=>{const op=S.custOpen===c.id;return`<div class="cc ${op?'open':''}"><button class="cc-h" data-act="custopen" data-v="${esc(c.id)}"><span class="av">${esc(initials(c.name))}</span><span class="cc-t"><b>${esc(c.name)}</b><small>${esc(c.phone||'—')} · ${c.n} дархост${c.sold?' · '+c.sold+' харид':''}</small></span><span class="cc-r">${c.debt?`<b class="dbt">${num(c.debt)}</b><small>қарз</small>`:c.sum?`<b>${num(c.sum)}</b><small>${esc(C.cur)}</small>`:`<small>${ago(c.last)}</small>`}</span></button>
+    ${op?`<div class="cc-b"><div class="bal"><div><span>Дархост</span><b>${c.n}</b></div><div><span>Харид</span><b>${money(c.sum)}</b></div><div class="${c.debt?'due-b':'ok-b'}"><span>Қарз</span><b>${money(c.debt)}</b></div></div>
+      <div class="bar">${c.phone?`<a class="btn" href="${waLink(c.phone,'Ассалому алайкум, '+c.name+'!')}" target="_blank" rel="noopener">WhatsApp</a>`:''}</div>
+      <div class="mini">${c.rs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(r=>`<button class="mrow" data-act="open" data-id="${r.id}"><span class="tag">${esc(r.code)}</span><span class="mt">${esc(titleOf(r))}</span>${r.price?`<span class="mp">${num(r.price)}</span>`:''}${pill(r.status)}</button>`).join('')||'<div class="small muted">Дархост нест.</div>'}</div></div>`:''}</div>`}).join('')}</div>`;
+}
+function invListView(){
+  const f=S.invF||'all',q=(S.iq||'').toLowerCase().trim();
+  const all=S.reqs.filter(r=>SOLD.includes(r.status)).map(r=>({r,t:r.orderedAt||r.offeredAt||r.createdAt||0,paid:paidOf(r),bal:balOf(r)})).sort((a,b)=>b.t-a.t);
+  const m0=new Date();m0.setDate(1);m0.setHours(0,0,0,0);
+  let l=all.filter(x=>f==='all'||(f==='debt'?x.bal>0:f==='paid'?x.bal<=0:x.t>=m0.getTime()));
+  if(q)l=l.filter(({r})=>(r.code+' '+custName(r)+' '+(custPhone(r)||'')+' '+(r.parts||'')).toLowerCase().includes(q));
+  const sum=k=>l.reduce((a,x)=>a+(k==='p'?+x.r.price||0:k==='paid'?x.paid:x.bal),0);
+  const chips=[['all','Ҳама',all.length],['month','Ин моҳ',all.filter(x=>x.t>=m0.getTime()).length],['debt','Қарз',all.filter(x=>x.bal>0).length],['paid','Пардохт шуд',all.filter(x=>x.bal<=0).length]];
+  return`<section class="hero"><div class="hero-top"><div><div class="hello">Инвойсҳо</div><div class="hdate">${l.length} инвойс</div></div></div>
+    <div class="hkpis c3"><div class="hk"><b>${num(sum('p'))}</b><span class="hl">Ҷамъ, ${esc(C.cur)}</span></div><div class="hk"><b style="color:var(--ok)">${num(sum('paid'))}</b><span class="hl">Пардохт шуд</span></div><div class="hk"><b style="color:${sum('b')?'var(--bad)':'inherit'}">${num(sum('b'))}</b><span class="hl">Боқимонда</span></div></div></section>
+    <label class="search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="iq" data-iq placeholder="Ҷустуҷӯ: рақам, муштарӣ, қисм" value="${esc(S.iq||'')}"></label>
+    <div class="rp-chips">${chips.map(([k,lb,n])=>`<button class="st ${f===k?'on':''}" data-act="invf" data-v="${k}"><i></i>${lb}<b>${n}</b></button>`).join('')}</div>
+    ${l.length?`<div class="ilist">${l.map(({r,t,paid,bal})=>`<button class="ir" data-act="inv" data-id="${r.id}"><span class="ir-ic">${IC(ICONS.inv,20)}</span><span class="ir-t"><b>INV-${esc(r.code)}</b><small>${fdate(t)} · ${esc(custName(r)||'—')}</small><small class="ir-p">${esc(titleOf(r))}</small></span><span class="ir-r"><b>${num(r.price)}</b><span class="ev ${bal<=0?'ev-login':paid>0?'ev-open':'ev-logout'}">${bal<=0?'пардохт шуд':paid>0?'қисман':'қарз '+num(bal)}</span></span></button>`).join('')}</div>`:'<div class="empty"><b>Инвойс нест</b><span class="small">Вақте муштарӣ заказ медиҳад, инвойс дар ин ҷо пайдо мешавад.</span></div>'}`;
 }
 function debtView(){
   const rs=S.reqs.filter(r=>balOf(r)>0);
@@ -1391,7 +1459,7 @@ function calcPP(id){
   if(pp){if(any&&r.cost){const p=sum-r.cost;pp.textContent=money(Math.round(p*100)/100)+(sum?' · '+Math.round(p/sum*100)+'%':'');pp.style.color=p<0?'var(--bad)':''}else pp.textContent='—'}
 }
 
-document.addEventListener('input',e=>{if(e.target.id==='n-codes'){codesList();return}if(e.target.dataset&&e.target.dataset.qsum){const id=e.target.dataset.qsum;qTotals(id);return}if(e.target.dataset&&e.target.dataset.cpct){const id=e.target.dataset.cpct,p=parseFloat(e.target.value)||0,pr=+e.target.dataset.profit||0;const a=document.getElementById('c-amt-'+id);if(a)a.value=Math.round(Math.max(0,pr)*p/100*100)/100;return}if(e.target.classList&&e.target.classList.contains('cqin')){S.cq=S.cq||{};S.cq[e.target.dataset.code]=Math.max(1,parseInt(e.target.value)||1);return}});
+document.addEventListener('input',e=>{if(e.target.id==='n-codes'){codesList();return}if(e.target.id==='cq2'||e.target.id==='iq'){S[e.target.id]=e.target.value;const p=e.target.selectionStart;render();const x=document.getElementById(e.target.id);if(x){x.focus();try{x.setSelectionRange(p,p)}catch(_){}}return}if(e.target.dataset&&e.target.dataset.qsum){const id=e.target.dataset.qsum;qTotals(id);return}if(e.target.dataset&&e.target.dataset.cpct){const id=e.target.dataset.cpct,p=parseFloat(e.target.value)||0,pr=+e.target.dataset.profit||0;const a=document.getElementById('c-amt-'+id);if(a)a.value=Math.round(Math.max(0,pr)*p/100*100)/100;return}if(e.target.classList&&e.target.classList.contains('cqin')){S.cq=S.cq||{};S.cq[e.target.dataset.code]=Math.max(1,parseInt(e.target.value)||1);return}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-cq]');if(!b)return;e.preventDefault();const inp=b.parentNode.querySelector('.cqin');const v=Math.max(1,(parseInt(inp.value)||1)+(+b.dataset.cq));inp.value=v;S.cq=S.cq||{};S.cq[b.dataset.code]=v},true);
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;render()}else if(e.target.dataset&&e.target.dataset.pp)calcPP(e.target.dataset.pp)});
 document.addEventListener('submit',async e=>{
@@ -1539,6 +1607,9 @@ document.addEventListener('click',async e=>{
       if(before===after){render();return}
       await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
+    case'custseg':S.custSeg=b.dataset.v;break;
+    case'custopen':S.custOpen=S.custOpen===b.dataset.v?null:b.dataset.v;break;
+    case'invf':S.invF=b.dataset.v;break;
     case'pick':S.pick=b.dataset.v;render();return;
     case'pickclose':S.pick=null;render();return;
     case'pickv':S[b.dataset.k]=b.dataset.v;S.pick=null;render();return;
