@@ -1238,8 +1238,23 @@ function custReqForm(){
 }
 function newReqForm(forAdmin){
   if(!forAdmin)return custReqForm();
+  const md=S.fMode==='codes'?'codes':'simple';
+  const sw=`<div class="seg mode"><button type="button" data-act="fmode" data-v="simple" class="${md==='simple'?'on':''}">Ном ва акс</button><button type="button" data-act="fmode" data-v="codes" class="${md==='codes'?'on':''}">Кодҳо пайдарҳам</button></div>`;
+  if(md==='codes')return`<form class="card simple-f" id="f-new"><h2>Дархост аз номи муштарӣ</h2>${sw}
+    <div class="grid2"><label class="big"><span>Номи муштарӣ</span><input id="n-cname" required></label><label class="big"><span>WhatsApp</span><input id="n-cphone" inputmode="tel" placeholder="+971…"></label></div>
+    <div class="big"><div class="lbl">Кодҳо</div><div class="small muted">Ҳар код дар як сатр — пайдарҳам нависед ё аз WhatsApp/Excel гузоред. Пас аз код миқдор: <code class="pc">21810-A9000 2</code></div>
+      <textarea id="n-codes" class="codes-ta" rows="8" placeholder="21810-A9000\n21950-A9000\n25281-2F001 2"></textarea></div>
+    <div class="big"><div class="lbl">Миқдор</div><div id="codes-list" class="codes-list"></div></div>
+    <details class="more" id="n-more"><summary>Мошин, VIN ва дигар (ихтиёрӣ)</summary><div class="grid">
+      <label class="full">${esc(C.f1)}<input id="n-car" placeholder="${esc(C.f1ph)}"></label>
+      <label>${esc(C.f2)}<input id="n-year" placeholder="${esc(C.f2ph)}"></label>
+      <label>${esc(C.f3)}<input id="n-vin" autocapitalize="characters" spellcheck="false" style="font-family:var(--mono)"></label>
+      <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Нав ё кӯҳна?</div><div class="radio">${Object.entries(COND).map(([k,l])=>`<label><input type="radio" name="n-cond" value="${k}" ${k==='any'?'checked':''}>${l}</label>`).join('')}</div></div>
+      <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Кай лозим?</div><div class="radio">${Object.entries(URG).map(([k,u])=>`<label><input type="radio" name="n-urg" value="${k}" ${k==='d3'?'checked':''}>${u.l}</label>`).join('')}</div></div>
+      <label class="full">Эзоҳ<input id="n-note"></label></div></details>
+    <div class="bar"><button class="btn pri" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button><button class="btn" type="button" data-act="closenew">Бекор</button></div></form>`;
   const rows=[];for(let i=0;i<S.nItems;i++)rows.push(itemRow(i));
-  return`<form class="card" id="f-new"><h2>${forAdmin?'Дархост аз номи муштарӣ':'Дархости нав'}</h2><div class="grid">
+  return`<form class="card" id="f-new"><h2>${forAdmin?'Дархост аз номи муштарӣ':'Дархости нав'}</h2>${sw}<div class="grid">
     ${forAdmin?`<label>Номи муштарӣ<input id="n-cname" required></label><label>WhatsApp-и муштарӣ<input id="n-cphone" inputmode="tel" placeholder="+971…"></label>`:''}
     <div class="grid2 full"><label>${esc(C.f1)}<input id="n-car" required placeholder="${esc(C.f1ph)}"></label>
     <label>${esc(C.f2)}<input id="n-year" placeholder="${esc(C.f2ph)}"></label></div>
@@ -1547,7 +1562,7 @@ document.addEventListener('submit',async e=>{
   }
   if(fid==='f-new'){
     const forAdmin=view()==='admin';
-    const codesMode=!forAdmin&&S.fMode==='codes';
+    const codesMode=S.fMode==='codes';
     const car=val('n-car')||(codesMode?'—':'');if(!car)return;
     const items=[];for(let i=0;i<S.nItems;i++){const n=val('n-it-'+i),code=val('n-ic-'+i).toUpperCase().replace(/\s+/g,' ').trim();if(n||code){const it={n:n||code,q:Math.max(1,parseInt(val('n-iq-'+i))||1),price:null,off:false};if(code)it.code=code;items.push(it)}}
     const bt=document.getElementById('n-codes');
