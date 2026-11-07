@@ -1184,24 +1184,32 @@ function qTotals(id){let s=0;document.querySelectorAll('input[type=number][data-
   const vb=document.getElementById('q-vat-'+id),on=vb&&vb.checked,vr=+C.vat||0,va=on?Math.round(s*vr)/100:0;
   const set=(k,v)=>{const e=document.getElementById(k+id);if(e)e.textContent=num(v)+' '+C.cur};set('q-tot-',s);set('q-vatv-',va);set('q-totv-',Math.round((s+va)*100)/100);
   document.querySelectorAll('.sum.vat,.sum.tot').forEach(e=>e.style.opacity=on?1:.4)}
+function quoteForm(r,cancel){
+  return (S.qEdit&&S.qEdit.rid===r.id?'<div class="note" style="margin-bottom:8px">Нархи паставшикро иваз карда истодаед.</div>':'')+quoteForm0(r,cancel)}
+function quoteForm0(r,cancel){
+  const its=itemsOf(r);
+  const eq=S.qEdit&&S.qEdit.rid===r.id?(r.quotes||[]).find(x=>x.id===S.qEdit.qid):null;
+  const pv=i=>{if(!eq)return'';const raw=Array.isArray(eq.itemCosts)?eq.itemCosts[i]:(its.filter(x=>!x.off).length===1?eq.cost:null);if(raw==null)return'';return Math.round(raw/(1+(+eq.vat||0)/100)*100)/100};
+  const ev=k=>eq?esc(eq[k]??''):'';
+  const qrow=(it,i)=>it.off?'':`<div class="qi"><div class="qi-top"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span><input id="q-ip-${r.id}-${i}" data-qsum="${r.id}" value="${pv(i)}" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Нарх" aria-label="Нархи харид"></div>
+      ${S.qNc&&S.qNc[r.id+'-'+i]?`<input id="q-nc-${r.id}-${i}" class="codein" placeholder="Коди нав (агар иваз шуд)" value="${esc(it.code||'')}" autocapitalize="characters" spellcheck="false">`:`<button type="button" class="link small" data-act="qnc" data-id="${r.id}" data-v="${i}">↻ Код иваз шуд</button>`}</div>`;
+  return `<div class="cform qform">
+    <div class="grid"><label>Паставшик<input id="q-sup-${r.id}" value="${ev('sup')}" placeholder="Номи мағоза"></label><label>Телефони паставшик<input id="q-ph-${r.id}" value="${ev('ph')}" inputmode="tel" placeholder="ихтиёрӣ"></label></div>
+    <div><div class="small muted" style="font-weight:600;margin-bottom:6px">Нархи харид барои ҳар қисм (${esc(C.cur)}). Агар паставшик надорад — холӣ монед.</div><div class="qitems">${its.map(qrow).join('')}</div>
+      <div class="sum"><span>Ҷамъ</span><span id="q-tot-${r.id}">0</span></div>
+      ${+C.vat>0?`<label class="chk vatchk"><input type="checkbox" id="q-vat-${r.id}" data-qsum="${r.id}" ${!eq||eq.vat?'checked':''}>+ VAT ${C.vat}% (нархҳо бе VAT навишта шудаанд)</label>
+      <div class="sum vat"><span>VAT ${C.vat}%</span><span id="q-vatv-${r.id}">0</span></div><div class="sum tot"><span>Ҷамъ бо VAT</span><span id="q-totv-${r.id}">0</span></div>`:''}</div>
+    <div class="grid"><label>Намуд<select id="q-kind-${r.id}">${Object.entries(KIND).map(([k,l])=>`<option value="${k}" ${(eq?eq.kind:(r.condition==='used'?'used':'orig'))===k?'selected':''}>${l}</option>`).join('')}</select></label><label>Расонидан (рӯз)<input id="q-eta-${r.id}" value="${ev('eta')}" type="number" min="0" step="1"></label>
+    <label class="full">Эзоҳ<input id="q-note-${r.id}" value="${ev('note')}" placeholder="Сифат, ранг…"></label></div>
+    <div class="bar"><button class="btn pri" data-act="addq" data-id="${r.id}">${eq?'Тағйиротро сабт кардан':'Сабт кардан'}</button>${eq?'<button class="btn" data-act="qeditx">Бекор</button>':''}${cancel?'<button class="btn" data-act="qclose">Бекор</button>':''}</div></div>`;
+}
 function quotesHtml(r,v,canAdd){
   const qs=(r.quotes||[]).slice().sort((a,b)=>(+a.cost||0)-(+b.cost||0));
   const min=qs.length?+qs[0].cost:null;
   const list=qs.length?`<div class="qlist">${qs.map(q=>`<div class="q ${r.chosenQ===q.id?'chosen':''}"><span class="qs">${esc(q.sup)} ${qs.length>1&&+q.cost===min?'<span class="best">арзонтарин</span>':''} ${r.chosenQ===q.id?'<span class="best">интихоб шуд</span>':''}</span><span class="qc">${money(q.cost)}${q.vat?`<small class="vatl">бо VAT ${q.vat}%</small>`:''}</span>
     <span class="qm"><span>${esc(KIND[q.kind]||'')}</span>${q.eta?`<span>${esc(q.eta)} рӯз</span>`:''}${q.ph?`<span>${esc(q.ph)}</span>`:''}${q.note?`<span>${esc(q.note)}</span>`:''}<span>${esc(uname(q.by))} · ${ago(q.t)}</span></span>${Array.isArray(q.itemCosts)&&itemsOf(r).length>1?`<span class="qb">${itemsOf(r).map((it,i)=>it.off?'':`<span><code class="pc">${esc(it.code||it.n)}</code> ${q.itemCosts[i]!=null?num(q.itemCosts[i]):'<span class="muted">нест</span>'}</span>`).join('')}</span>`:''}
-    ${v==='admin'||canAdd?`<span class="qa">${v==='admin'&&r.chosenQ!==q.id?`<button class="btn ok" data-act="chooseq" data-id="${r.id}" data-q="${q.id}" style="height:34px">Интихоб</button>`:''}${q.ph?`<a class="btn" style="height:34px" href="${waLink(q.ph,waText(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}${v==='admin'||(canAdd&&actIds().includes(q.by))?`<button class="link" data-act="delq" data-id="${r.id}" data-q="${q.id}" style="color:var(--bad)">Нест кардан</button>`:''}</span>`:''}</div>`).join('')}</div>`:`<div class="small muted">Ҳоло нарх нест.</div>`;
-  const its=itemsOf(r);
-  const qrow=(it,i)=>it.off?'':`<div class="qi"><div class="qi-top"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span><input id="q-ip-${r.id}-${i}" data-qsum="${r.id}" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Нарх" aria-label="Нархи харид"></div>
-      ${S.qNc&&S.qNc[r.id+'-'+i]?`<input id="q-nc-${r.id}-${i}" class="codein" placeholder="Коди нав (агар иваз шуд)" value="${esc(it.code||'')}" autocapitalize="characters" spellcheck="false">`:`<button type="button" class="link small" data-act="qnc" data-id="${r.id}" data-v="${i}">↻ Код иваз шуд</button>`}</div>`;
-  const form=!canAdd?'':S.qOpen!==r.id?`<div><button class="btn pri" data-act="qopen" data-id="${r.id}">+ Нарх илова кардан</button></div>`:`<div class="cform qform">
-    <div class="grid"><label>Паставшик<input id="q-sup-${r.id}" placeholder="Номи мағоза"></label><label>Телефони паставшик<input id="q-ph-${r.id}" inputmode="tel" placeholder="ихтиёрӣ"></label></div>
-    <div><div class="small muted" style="font-weight:600;margin-bottom:6px">Нархи харид барои ҳар қисм (${esc(C.cur)}). Агар паставшик надорад — холӣ монед.</div><div class="qitems">${its.map(qrow).join('')}</div>
-      <div class="sum"><span>Ҷамъ</span><span id="q-tot-${r.id}">0</span></div>
-      ${+C.vat>0?`<label class="chk vatchk"><input type="checkbox" id="q-vat-${r.id}" data-qsum="${r.id}" checked>+ VAT ${C.vat}% (нархҳо бе VAT навишта шудаанд)</label>
-      <div class="sum vat"><span>VAT ${C.vat}%</span><span id="q-vatv-${r.id}">0</span></div><div class="sum tot"><span>Ҷамъ бо VAT</span><span id="q-totv-${r.id}">0</span></div>`:''}</div>
-    <div class="grid"><label>Намуд<select id="q-kind-${r.id}">${Object.entries(KIND).map(([k,l])=>`<option value="${k}" ${(r.condition==='used'?'used':'orig')===k?'selected':''}>${l}</option>`).join('')}</select></label><label>Расонидан (рӯз)<input id="q-eta-${r.id}" type="number" min="0" step="1"></label>
-    <label class="full">Эзоҳ<input id="q-note-${r.id}" placeholder="Сифат, ранг…"></label></div>
-    <div class="bar"><button class="btn pri" data-act="addq" data-id="${r.id}">Сабт кардан</button><button class="btn" data-act="qclose">Бекор</button></div></div>`;
+    ${v==='admin'||canAdd?`<span class="qa">${v==='admin'&&r.chosenQ!==q.id?`<button class="btn ok" data-act="chooseq" data-id="${r.id}" data-q="${q.id}" style="height:34px">Интихоб</button>`:''}${q.ph?`<a class="btn" style="height:34px" href="${waLink(q.ph,waText(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}${v==='admin'||(canAdd&&actIds().includes(q.by))?`<button class="link" data-act="qedit" data-id="${r.id}" data-q="${q.id}">✎ Нархро иваз кардан</button><button class="link" data-act="delq" data-id="${r.id}" data-q="${q.id}" style="color:var(--bad)">Нест кардан</button>`:''}</span>`:''}</div>`).join('')}</div>`:`<div class="small muted">Ҳоло нарх нест.</div>`;
+  const form=!canAdd||canAdd==='list'?'':S.qOpen!==r.id?`<div><button class="btn pri" data-act="qopen" data-id="${r.id}">+ Нарх илова кардан</button></div>`:quoteForm(r,true);
   return`<div class="card"><h3>Нархи паставшикҳо · ${qs.length}</h3>${list}${form}</div>`;
 }
 function sheet(){
@@ -1212,6 +1220,7 @@ function sheet(){
     ${adm?`<dt>Муштарӣ</dt><dd>${esc(custName(r))} ${custPhone(r)?'· <span style="font-family:var(--mono)">'+esc(custPhone(r))+'</span>':''}</dd>`:''}
     <dt>Масъул</dt><dd>${r.workerId?`<b>${esc(uname(r.workerId))}</b>`:'<span class="who none">таъин нашуд</span>'}${r.assignedAt&&r.foundAt?` · ёфт дар ${hrs((r.foundAt-r.assignedAt)/36e5)}`:''}</dd>${r.workerNote?`<dt>Эзоҳи коргар</dt><dd>${esc(r.workerNote)}</dd>`:''}${r.returnReason?`<dt>Сабаби бозгашт</dt><dd>${esc(r.returnReason)}</dd>`:''}</dl>`;
   const canEd=adm||(isMine&&['assigned','searching','found'].includes(r.status));
+  const wPriceMode=v==='worker'&&((['searching','found'].includes(r.status)&&isMine)||(r.status==='assigned'&&(!r.workerId||isMine)));
   const ed=S.editIt&&S.editIt.id===r.id?S.editIt.i:-1;
   const itemsBox=`<div class="items">${its.map((it,i)=>i===ed?`<div class="it-ed"><div class="small muted">Код ё номро иваз кунед. Коди кӯҳна нигоҳ дошта мешавад.</div>
       <input id="ie-code" value="${esc(it.code||'')}" placeholder="Коди нав" autocapitalize="characters" spellcheck="false" style="font-family:var(--mono)">
@@ -1286,7 +1295,7 @@ function sheet(){
         ${st==='packed'?`<div class="cargo-ph"><div class="small" style="font-weight:700">1. Акси бор дар карго ${(r.photos||[]).some(p=>p.k==='g')?'<span class="best">гузошта шуд ✓</span>':'<span class="warn-note">(ҳатмӣ)</span>'}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Акси бор / накладной<input type="file" accept="image/*" capture="environment" multiple data-up="${r.id}" data-kind="g"></label></div><div class="small" style="font-weight:700">2. Маълумоти карго</div><div class="grid"><label>Номи карго<input id="o-cargo-${r.id}" value="${esc(r.cargo||'')}" placeholder="Масалан: Cargo Dushanbe"></label><label>Рақами пайгирӣ / накладной<input id="o-trk-${r.id}" value="${esc(r.tracking||'')}"></label></div><div><button class="btn ok" data-act="ocargo" data-id="${r.id}">Ба карго супоридам</button></div>`:''}`:''}</div>`;}
     if(r.status==='assigned'&&(!r.workerId||isMine))act+=`<div class="card"><h3>Кор</h3><div><button class="btn pri" data-act="take" data-id="${r.id}">Ба кор гирифтан</button></div></div>`;
     if(['searching','found'].includes(r.status)&&isMine){
-      act+=quotesHtml(r,v,true);
+      if((r.quotes||[]).length)act+=quotesHtml(r,v,'list');
       if(r.status==='searching')act+=`<div class="card"><h3>Натиҷа</h3><label>Эзоҳ ба роҳбар<input id="w-note-${r.id}" value="${esc(r.workerNote||'')}" placeholder="Сифат, мӯҳлат, оригинал/копия"></label>
         <div class="bar"><button class="btn ok" data-act="found" data-id="${r.id}" ${(r.quotes||[]).length?'':'disabled'}>Ёфт шуд</button><button class="btn bad" data-act="notfound" data-id="${r.id}">Ёфт нашуд</button></div>${(r.quotes||[]).length?'':'<div class="small muted">Барои «Ёфт шуд» камаш як нарх илова кунед.</div>'}</div>`;
       else act+=`<div class="note">Роҳбар нархро интихоб мекунад ва ба муштарӣ мефиристад.</div>`;
@@ -1296,7 +1305,7 @@ function sheet(){
   const logs=r.log.concat(r.plog).sort((a,b)=>b.t-a.t);
   const log=`<details class="card dt" data-k="log" ${S.det.log?'open':''}><summary><h3>Таърих</h3></summary><ul class="log">${logs.map(l=>`<li><time>${fmt(l.t)}</time><span>${esc(l.s)} <span class="muted">· ${esc(uname(l.by))}</span></span></li>`).join('')}</ul></details>`;
   return`<div class="sheet-bg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="sheet-h"><span class="tag">${esc(r.code)}</span>${pill(r.status)}<span class="urg ${r.urgency||'d3'}">${URG[r.urgency||'d3'].l}</span><button class="x" data-act="close" aria-label="Пӯшидан">×</button><div class="ttl">${esc(titleOf(r))}</div></div>
-    <div class="card">${info}</div>${adm?procHtml(r):''}<div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div><div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
+    <div class="card">${info}</div>${adm?procHtml(r):''}${wPriceMode?`<div class="card pricing"><h3>Қисмҳо ва нарх</h3>${quoteForm(r,false)}</div>`:`<div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div>`}<div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
 }
 
 function invoiceView(){
@@ -1320,7 +1329,8 @@ function body(){
   return{admin:adminView,worker:workerView,customer:customerView,onboard:onboardView}[view()]();
 }
 function render(){
-  const keep={};app.querySelectorAll('input[id],select[id],textarea[id]').forEach(e=>{if(['q','fg','aw'].includes(e.id)||e.type==='file'||e.tagName==='TEXTAREA'&&e.hidden)return;keep[e.id]=e.type==='radio'||e.type==='checkbox'?e.checked:e.value});
+  const keep={};app.querySelectorAll('input[id],select[id],textarea[id]').forEach(e=>{if(['q','fg','aw'].includes(e.id)||(S.skipQ&&e.id.startsWith('q-'))||e.type==='file'||e.tagName==='TEXTAREA'&&e.hidden)return;keep[e.id]=e.type==='radio'||e.type==='checkbox'?e.checked:e.value});
+  S.skipQ=false;
   const files=document.getElementById('n-photo')?.files||null;
   const f=document.activeElement&&document.activeElement.id;
   const sc=app.querySelector('.sheet')?.scrollTop||0;
@@ -1331,6 +1341,7 @@ function render(){
   const sh=app.querySelector('.sheet');if(sh)sh.scrollTop=sc;
   opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true});
   codesList();
+  app.querySelectorAll('[id^="q-tot-"]').forEach(e=>qTotals(e.id.slice(6)));
   app.querySelectorAll('.pipe-wrap').forEach(w=>{const on=w.querySelector('.st.on');if(!on)return;const a=on.getBoundingClientRect(),b=w.getBoundingClientRect();if(a.right>b.right)w.scrollLeft+=a.right-b.right+8;else if(a.left<b.left)w.scrollLeft-=b.left-a.left+8});
   if(S.open)calcPP(S.open);
   fillPhotos();
@@ -1555,18 +1566,23 @@ document.addEventListener('click',async e=>{
     case'take':{const w=S.wid||actWorker();if(!w)return;
       if(await upd(id,{workerId:w,status:'searching',assignedAt:r.assignedAt||Date.now()},'Ба кор гирифт: '+uname(w)))
         setDoc(doc(db,'priv',id),{workerId:w},{merge:true}).catch(()=>{});return}
+    case'qedit':S.qEdit={rid:id,qid:b.dataset.q};S.skipQ=true;if(view()==='admin')S.qOpen=id;render();setTimeout(()=>{const x=document.getElementById('q-sup-'+id);if(x){x.scrollIntoView({block:'center',behavior:'smooth'});qTotals(id)}},40);return;
+    case'qeditx':S.qEdit=null;S.skipQ=true;S.qOpen=null;render();return;
     case'qnc':S.qNc=S.qNc||{};S.qNc[id+'-'+b.dataset.v]=1;render();setTimeout(()=>{const x=document.getElementById('q-nc-'+id+'-'+b.dataset.v);if(x){x.focus();x.select()}},30);return;
     case'addq':{const sup=val('q-sup-'+id);const its0=itemsOf(r);const ic=its0.map((it,i)=>{if(it.off)return null;const v=fnum('q-ip-'+id+'-'+i);return v>0?v:null});
       const vb=document.getElementById('q-vat-'+id),vat=!!(vb&&vb.checked)&&+C.vat>0?+C.vat:0;
       if(vat)ic.forEach((v,i)=>{if(v!=null)ic[i]=Math.round(v*(100+vat))/100});
       const cost=Math.round(ic.reduce((a,v)=>a+(v||0),0)*100)/100;
       if(!sup||!(cost>0)){toast('Номи паставшик ва камаш як нархро нависед');return}
+      if(r.status==='assigned'&&view()==='worker'){const w=S.wid||actWorker();if(!w)return;if(!await upd(id,{workerId:w,status:'searching',assignedAt:r.assignedAt||Date.now()},'Ба кор гирифт: '+uname(w)))return;await setDoc(doc(db,'priv',id),{workerId:w},{merge:true}).catch(()=>{})}
       const src=S.rawReqs[id]||(S.extra||{})[id]||(S.extraO||{})[id]||r;const raw=itemsOf(src).map(x=>({...x}));const chg=[];
       raw.forEach((it,i)=>{const el=document.getElementById('q-nc-'+id+'-'+i);if(!el)return;const nc=el.value.toUpperCase().replace(/\s+/g,' ').trim();if(nc&&nc!==(it.code||'')){chg.push((it.code||it.n)+' → '+nc);if(it.code&&!it.oldCode)it.oldCode=it.code;if(!it.n||it.n===it.code)it.n=nc;it.code=nc;if(it.oldCode===it.code)delete it.oldCode}});
       if(chg.length)await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Код иваз шуд: '+chg.join(', '),true);
       S.qNc={};
       const q={id:'q'+Date.now().toString(36),sup,cost,vat:vat||0,itemCosts:its0.length>1?ic:null,kind:val('q-kind-'+id)||'orig',eta:val('q-eta-'+id),ph:val('q-ph-'+id),note:val('q-note-'+id),by:actor(),t:Date.now()};
-      if(await upd(id,{quotes:(r.quotes||[]).concat([q])},'Нарх: '+sup+' · '+money(cost))&&!(S.qOpen=null)){app.querySelectorAll('[id^="q-"]').forEach(x=>{if(x.tagName==='INPUT')x.value=''});render()}return}
+      const eqid=S.qEdit&&S.qEdit.rid===id?S.qEdit.qid:null;if(eqid){q.id=eqid;const old=(r.quotes||[]).find(x=>x.id===eqid);if(old){q.by=old.by||q.by}}
+      const nq=eqid?(r.quotes||[]).map(x=>x.id===eqid?q:x):(r.quotes||[]).concat([q]);const extra=eqid&&r.chosenQ===eqid?{cost:q.cost,supplier:q.sup,supplierPhone:q.ph||''}:{};S.qEdit=null;
+      if(await upd(id,{quotes:nq,...extra},(eqid?'Нарх иваз шуд: ':'')+'Нарх: '+sup+' · '+money(cost))&&!(S.qOpen=null)){app.querySelectorAll('[id^="q-"]').forEach(x=>{if(x.tagName==='INPUT')x.value=''});render()}return}
     case'delq':{const qid=b.dataset.q;const patch={quotes:(r.quotes||[]).filter(q=>q.id!==qid)};if(r.chosenQ===qid)patch.chosenQ=null;await upd(id,patch,'Нарх нест карда шуд');return}
     case'chooseq':{const q=(r.quotes||[]).find(x=>x.id===b.dataset.q);if(!q)return;await upd(id,{chosenQ:q.id,cost:q.cost,supplier:q.sup,supplierPhone:q.ph||''},'Интихоб: '+q.sup+' · '+money(q.cost));return}
     case'found':{if(!(r.quotes||[]).length){toast('Камаш як нарх илова кунед');return}const best=r.quotes.slice().sort((x,y)=>x.cost-y.cost)[0];
