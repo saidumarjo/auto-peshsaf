@@ -30,6 +30,17 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
+    // ---------- воридшавӣ ва онлайн (ҳама менависанд, танҳо роҳбар мехонад) ----------
+    match /activity/{a} {
+      allow create: if signed() && request.resource.data.keys().hasOnly(['who', 'role', 'name', 'type', 't', 'dev'])
+        && request.resource.data.type in ['login', 'open', 'close', 'logout'];
+      allow read, delete: if isAdmin();
+    }
+    match /presence/{p} {
+      allow create, update: if signed() && request.resource.data.keys().hasOnly(['who', 'role', 'name', 'lastSeen', 'online']);
+      allow read, delete: if isAdmin();
+    }
+
     // ---------- коргарон ----------
     match /workers/{w} {
       allow read: if isAdmin() || isWorker();

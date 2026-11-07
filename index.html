@@ -413,6 +413,14 @@ h3{font-size:10.5px}
 .steps-l{font-size:10.5px}
 .empty .btn{margin-top:6px}
 .it.off .link{text-decoration:none;opacity:1}
+
+.online{display:inline-flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--ok);border-radius:999px;padding:3px 10px;font-weight:700;font-size:13px}
+.online i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.online small{font-weight:400;opacity:.8}
+.tbl.act td:not(:first-child),.tbl.act th:not(:first-child){text-align:left}
+.ev{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.ev-login{background:var(--ok-bg);color:var(--ok)} .ev-open{background:var(--info-bg);color:var(--info)}
+.ev-close{background:var(--neutral-bg);color:var(--muted)} .ev-logout{background:var(--bad-bg);color:var(--bad)}
 </style>
 </head>
 <body>
@@ -668,7 +676,19 @@ function wCard(id,u,from,clickable){
 }
 function reportView(){
   const from=periodStart();
-  const top=`<div class="tabs" style="border:0">${[['o','Умумӣ'],['w','Коргарон'],['s','Паставшикҳо']].map(([k,l])=>`<button class="${S.repTab===k?'on':''}" data-act="rtab" data-v="${k}">${l}</button>`).join('')}</div>`+perChips();
+  const top=`<div class="tabs" style="border:0">${[['o','Умумӣ'],['a','Воридшавӣ'],['w','Коргарон'],['s','Паставшикҳо']].map(([k,l])=>`<button class="${S.repTab===k?'on':''}" data-act="rtab" data-v="${k}">${l}</button>`).join('')}</div>`+perChips();
+  if(S.repTab==='a'){
+    const isOn=p=>p&&p.online&&Date.now()-(p.lastSeen||0)<3*60000;
+    const pres=Object.values(S.pres||{}).sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
+    const on=pres.filter(isOn);
+    const rf=S.actRole||'all';
+    const rows=(S.acts||[]).filter(a=>a.t>=from&&(rf==='all'||a.role===rf));
+    const roleChips=`<div class="bar">${[['all','Ҳама'],['worker','Коргарон'],['admin','Роҳбарон'],['customer','Муштариён']].map(([k,l])=>`<button class="chip ${rf===k?'on':''}" data-act="actrole" data-v="${k}" style="height:32px">${l}</button>`).join('')}</div>`;
+    return top+`<div class="card"><h3>Ҳозир дар барнома · ${on.length}</h3>${on.length?`<div class="bar">${on.map(p=>`<span class="online"><i></i>${esc(p.name||'—')} <small>${esc(ROLE_L[p.role]||'')}</small></span>`).join('')}</div>`:'<div class="small muted">Ҳоло касе дар барнома нест.</div>'}
+      <div class="small muted">Охирин бор дида шуд: ${pres.filter(p=>!isOn(p)).slice(0,6).map(p=>esc(p.name||'—')+' — '+ago(p.lastSeen)).join(' · ')||'—'}</div></div>
+      ${roleChips}<div class="card"><h3>Таърих · ${rows.length}</h3>${rows.length?`<div class="tbl-wrap"><table class="tbl act"><thead><tr><th>Сана</th><th>Вақт</th><th>Ном</th><th>Нақш</th><th>Амал</th><th>Дастгоҳ</th></tr></thead><tbody>${rows.map(a=>{const d=new Date(a.t);return`<tr><td>${p2(d.getDate())+'.'+p2(d.getMonth()+1)}</td><td>${p2(d.getHours())+':'+p2(d.getMinutes())}</td><td>${esc(a.name||'—')}</td><td>${esc(ROLE_L[a.role]||'')}</td><td><span class="ev ev-${a.type}">${esc(ACT_L[a.type]||a.type)}</span></td><td>${esc(a.dev||'')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="small muted">Дар ин давра маълумот нест.</div>'}
+      <div class="small muted">«Ворид шуд/Баромад» — бо логин ва тугмаи баромадан. «Кушод/Пӯшид» — вақте барнома ё сайт кушода ё пӯшида мешавад.</div></div>`;
+  }
   if(S.repTab==='o'){
     const rs=S.reqs.filter(r=>(r.createdAt||0)>=from),n=rs.length;
     if(!n)return top+`<div class="empty"><b>Дар ин давра дархост нест</b><span class="small">Давраи дигарро интихоб кунед.</span></div>`;
@@ -973,14 +993,14 @@ document.addEventListener('submit',async e=>{
       await setDoc(doc(db,'sessions',cred.user.uid),{cid:id,t:Date.now()});
       const cs=await getDoc(doc(db,'customers',id));
       if(!cs.exists())await setDoc(doc(db,'customers',id),{name,phone:'+'+dg,createdAt:Date.now()});
-      S.busy=false;await startCustomer(id);toast('Хуш омадед, '+((cs.exists()&&cs.data().name)||name));
+      S.busy=false;await startCustomer(id);S.custLogged=true;startPresence('login');toast('Хуш омадед, '+((cs.exists()&&cs.data().name)||name));
     }catch(err){S.busy=false;S.loginErr='Ворид шуда нашуд ('+errTxt(err)+'). Интернетро санҷед ва боз кӯшиш кунед.';render()}
     return;
   }
   if(fid==='f-login'){
     const lg=cleanLogin(val('l-login')),pw=document.getElementById('l-pass').value;if(!lg||!pw)return;
     S.busy=true;S.loginErr='';render();
-    try{await signInWithEmailAndPassword(auth,lg+'@'+WORKER_DOMAIN,pw);S.busy=false;const x=document.getElementById('l-pass');if(x)x.value=''}
+    try{S.justLogged=true;await signInWithEmailAndPassword(auth,lg+'@'+WORKER_DOMAIN,pw);S.busy=false;const x=document.getElementById('l-pass');if(x)x.value=''}
     catch(err){S.busy=false;const c=err.code||'';S.loginErr=c.includes('too-many')?'Бисёр кӯшиш шуд. Чанд дақиқа интизор шавед.':c.includes('network')?'Интернет нест.':'Логин ё парол нодуруст аст.';render()}
     return;
   }
@@ -1093,15 +1113,16 @@ document.addEventListener('click',async e=>{
     case'etab':S.entryTab=b.dataset.v;S.loginErr='';break;
     case'showpw':S.showPw=!S.showPw;break;
     case'google':{S.busy=true;S.loginErr='';render();const prov=new GoogleAuthProvider();
-      try{await signInWithPopup(auth,prov)}catch(err){const c=err.code||'';
+      try{S.justLogged=true;await signInWithPopup(auth,prov)}catch(err){const c=err.code||'';
         if(c.includes('popup-blocked')||c.includes('operation-not-supported')||c.includes('popup-closed')&&false){try{await signInWithRedirect(auth,prov);return}catch(_){}}
         S.loginErr=c.includes('unauthorized-domain')?'Ин суроға дар Firebase иҷозат надорад (Authorized domains).':c.includes('popup-closed')?'Равзана пӯшида шуд. Боз кӯшиш кунед.':'Ворид шуда нашуд: '+(c||'хато')}
       S.busy=false;render();return}
-    case'logout':{const wasW=!!S.wid;S.open=null;S.newReq=false;S.denied=null;S.entryTab=wasW?'worker':S.isAdmin?'admin':'customer';await signOut(auth).catch(()=>{});return}
+    case'logout':{await logAct('logout');clearInterval(beat);S.custLogged=false;const wasW=!!S.wid;S.open=null;S.newReq=false;S.denied=null;S.entryTab=wasW?'worker':S.isAdmin?'admin':'customer';await signOut(auth).catch(()=>{});return}
     case'cred':S.credFor=b.dataset.v||null;break;
     case'fw':S.fWorker=b.dataset.v;S.fStatus=S.fWorker!=='all'?'all':'active';break;
     case'wopen':S.fWorker=b.dataset.v;S.fStatus='all';S.adminTab='req';scrollTo(0,0);break;
     case'period':S.period=b.dataset.v;break;
+    case'actrole':S.actRole=b.dataset.v;break;
     case'kpi':{const k=b.dataset.v;if(k==='profit'){S.adminTab='rep';S.repTab='o';render();scrollTo(0,0);return}
       S.fStatus=k;S.fWorker='all';S.fGroup='all';S.q='';render();setTimeout(()=>{const x=document.getElementById('list-anchor');if(x)x.scrollIntoView({behavior:'smooth',block:'start'})},30);return}
     case'markup':{if(!r||!r.cost)return;const i=itemsOf(r).findIndex(x=>!x.off);const el=document.getElementById('d-ip-'+id+'-'+i);if(el){el.value=Math.ceil(r.cost*(1+(+b.dataset.v)/100));calcPP(id)}return}
@@ -1160,6 +1181,23 @@ document.addEventListener('click',async e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(S.lb)S.lb=null;else if(S.open)S.open=null;else return;render()}});
 setInterval(()=>{const ae=document.activeElement;if(!ae||ae===document.body)render()},60000);
 
+/* ===== activity: who entered / left and when ===== */
+const ROLE_L={admin:'Роҳбар',worker:'Коргар',customer:'Муштарӣ'};
+const ACT_L={login:'Ворид шуд',open:'Кушод',close:'Пӯшид',logout:'Баромад'};
+function meInfo(){if(S.isAdmin)return{id:'adm:'+(S.email||'admin'),role:'admin',name:(S.admins&&S.admins[S.email]&&S.admins[S.email].name)||(S.isOwner?'Соҳиб':S.email||'Роҳбар')};
+  if(S.wid)return{id:S.wid,role:'worker',name:uname(S.wid)};if(S.cid)return{id:S.cid,role:'customer',name:uname(S.cid)};return null}
+let lastOpen=0,hiddenAt=0,beat=null;
+function logAct(type){const m=meInfo();if(!m)return Promise.resolve();
+  const dev=/Android/i.test(navigator.userAgent)?'Android':/iPhone|iPad/i.test(navigator.userAgent)?'iPhone':'Компютер';
+  const p1=setDoc(doc(collection(db,'activity')),{who:m.id,role:m.role,name:m.name||'',type,t:Date.now(),dev}).catch(()=>{});
+  const p2=setDoc(doc(db,'presence',m.id.replace(/[\/]/g,'_')),{who:m.id,role:m.role,name:m.name||'',lastSeen:Date.now(),online:type!=='close'&&type!=='logout'},{merge:true}).catch(()=>{});
+  return Promise.all([p1,p2])}
+function startPresence(type){lastOpen=Date.now();setTimeout(()=>logAct(type||'open'),1500);clearInterval(beat);
+  beat=setInterval(()=>{if(document.visibilityState==='visible'){const m=meInfo();if(m)setDoc(doc(db,'presence',m.id.replace(/[\/]/g,'_')),{lastSeen:Date.now(),online:true},{merge:true}).catch(()=>{})}},60000)}
+document.addEventListener('visibilitychange',()=>{if(!meInfo())return;
+  if(document.visibilityState==='hidden'){hiddenAt=Date.now();logAct('close')}
+  else if(hiddenAt&&Date.now()-hiddenAt>60000){logAct('open')}else if(hiddenAt){const m=meInfo();setDoc(doc(db,'presence',m.id.replace(/[\/]/g,'_')),{lastSeen:Date.now(),online:true},{merge:true}).catch(()=>{})}});
+
 /* ===== data subscriptions ===== */
 function stopAll(){unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={};S.extra={};S.extraO={};S.privsO={};S.privs={};S.workers={};S.customers={}}
 function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);if(fn.fail)fn.fail();if(!sub.warned){sub.warned=true;toast('Қисме аз маълумот бор нашуд ('+errTxt(err)+'). Қоидаҳои Firebase-ро санҷед.')}}))}
@@ -1172,6 +1210,8 @@ function startAdmin(){
   sub(collection(db,'workers'),firstOnce(s=>{S.workers={};s.forEach(d=>S.workers[d.id]=d.data())}),'workers');
   sub(collection(db,'customers'),firstOnce(s=>{S.customers={};s.forEach(d=>S.customers[d.id]=d.data())}),'customers');
   sub(collection(db,'admins'),firstOnce(s=>{S.admins={};s.forEach(d=>S.admins[d.id]=d.data())}),'admins');
+  unsubs.push(onSnapshot(query(collection(db,'activity'),orderBy('t','desc'),limit(600)),s=>{S.acts=[];s.forEach(d=>S.acts.push(d.data()));if(S.repTab==='a'||S.adminTab==='users')render()},()=>{}));
+  unsubs.push(onSnapshot(collection(db,'presence'),s=>{S.pres={};s.forEach(d=>{const x=d.data();S.pres[x.who||d.id]=x});if(S.repTab==='a'||S.adminTab==='users')render()},()=>{}));
 }
 function startWorker(wid){
   stopAll();S.wid=wid;const done=waitAll(6);
@@ -1200,15 +1240,16 @@ onAuthStateChanged(auth,async user=>{
   S.authReady=true;S.ready=false;render();
   try{
     const email=(user.email||'').toLowerCase();
-    if(!user.isAnonymous&&ADMIN_EMAILS.includes(email)){S.isAdmin=true;S.isOwner=true;startAdmin();return}
-    if(!user.isAnonymous&&user.emailVerified&&!email.endsWith('@'+WORKER_DOMAIN)){const ad=await getDoc(doc(db,'admins',email)).catch(()=>null);if(ad&&ad.exists()){S.isAdmin=true;startAdmin();return}}
+    S.email=email;S.justLogged=S.justLogged||false;
+    if(!user.isAnonymous&&ADMIN_EMAILS.includes(email)){S.isAdmin=true;S.isOwner=true;startAdmin();startPresence(S.justLogged?'login':'open');S.justLogged=false;return}
+    if(!user.isAnonymous&&user.emailVerified&&!email.endsWith('@'+WORKER_DOMAIN)){const ad=await getDoc(doc(db,'admins',email)).catch(()=>null);if(ad&&ad.exists()){S.isAdmin=true;startAdmin();startPresence(S.justLogged?'login':'open');S.justLogged=false;return}}
     if(email.endsWith('@'+WORKER_DOMAIN)){
       const st=await getDoc(doc(db,'staff',user.uid));
       if(!st.exists()){S.denied='Ин логин дигар фаъол нест. Аз роҳбар логини нав гиред.';S.ready=true;render();return}
-      startWorker(st.data().wid);return}
+      startWorker(st.data().wid);startPresence(S.justLogged?'login':'open');S.justLogged=false;return}
     if(user.isAnonymous){
       const ss=await getDoc(doc(db,'sessions',user.uid));
-      if(ss.exists()&&ss.data().cid){await startCustomer(ss.data().cid);return}
+      if(ss.exists()&&ss.data().cid){await startCustomer(ss.data().cid);if(!S.custLogged)startPresence('open');return}
       S.ready=true;render();return}
     S.denied='Почтаи '+email+' роҳбар нест. Агар муштарӣ бошед, бароед ва бо рақами WhatsApp ворид шавед.';S.ready=true;render();
   }catch(err){S.denied='Маълумот бор нашуд ('+errTxt(err)+').';S.ready=true;render()}
