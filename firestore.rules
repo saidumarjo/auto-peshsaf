@@ -84,7 +84,7 @@ service cloud.firestore {
             && request.resource.data.status in ['assigned', 'searching', 'found', 'notfound'])
         || (mineO(resource.data)
             && request.resource.data.orderWorkerId == resource.data.orderWorkerId
-            && onlyKeys(['ordStage', 'status', 'cargo', 'tracking', 'shippedAt', 'photos', 'updatedAt', 'log'])
+            && onlyKeys(['ordStage', 'status', 'cargo', 'tracking', 'weight', 'deliverBy', 'shippedAt', 'photos', 'updatedAt', 'log'])
             && request.resource.data.status in ['ordered', 'shipped'])
         || (mineC(resource.data)
             && onlyKeys(['custOff', 'status', 'orderedAt', 'updatedAt', 'log'])

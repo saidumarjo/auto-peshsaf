@@ -661,6 +661,13 @@ button.wc{cursor:pointer}
 .ir-t .ir-p{color:var(--ink);opacity:.8}
 .ir-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
 .ir-r b{font:700 15px var(--mono)}
+
+.shipinfo{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.shipinfo>div{background:var(--surface2);border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;min-width:0}
+.shipinfo span{font-size:11px;color:var(--muted);font-weight:600}
+.shipinfo b{font-size:14.5px;overflow-wrap:anywhere}
+.shipbox{border:1px solid color-mix(in srgb,var(--ok) 45%,var(--line));background:color-mix(in srgb,var(--ok) 7%,var(--surface));border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.sb-h{font-weight:800;color:var(--ok)}
 </style>
 </head>
 <body>
@@ -776,11 +783,17 @@ function waText(r){
   if(r.vin)L.push('VIN: '+r.vin);
   if(r.condition==='new')L.push('Намуд: '+(C.g1||'Нав'));else if(r.condition==='used')L.push('Намуд: '+(C.g2||'Кӯҳна'));
   return L.join('\n')}
+const isoD=t=>{const d=new Date(t);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+const siteUrl=()=>{try{return location.origin+location.pathname}catch(_){return''}};
 function custMsg(r){
   const n=custName(r),c=r.code;
   if(r.status==='offered')return`Ассалому алайкум, ${n}!\nДархости №${c} (${r.car}) ёфт шуд:\n${itemsOf(r).filter(i=>!i.off).map(i=>'• '+inm(i)+(i.q>1?' × '+i.q:'')+(i.price?' — '+money(i.price):'')).join('\n')}\nҶамъ: ${money(r.price)}${r.warrantyDays?'\nКафолат: '+r.warrantyDays+' рӯз':''}\nБарои заказ ба сайт ворид шавед: ${location.origin+location.pathname}\n${C.name}`;
   if(r.status==='ordered')return`Ассалому алайкум, ${n}! Закази №${c} қабул шуд. Ҷамъ: ${money(r.price)}${balOf(r)?', боқимонда: '+money(balOf(r)):''}.\n${C.name}`;
-  if(r.status==='shipped')return`Ассалому алайкум, ${n}! Закази №${c} дар роҳ аст.${r.tracking?' Пайгирӣ: '+r.tracking:''}\n${C.name}`;
+  if(r.status==='shipped'){const L=[`Ассалому алайкум, ${n}!`,`Закази №${c} ба карго супорида шуд ✅`,''];
+    if(r.cargo)L.push('📦 Карго: '+r.cargo);if(r.tracking)L.push('🔢 Рақами карго: '+r.tracking);if(+r.weight)L.push('⚖️ Вазни бор: '+r.weight+' кг');if(r.deliverBy)L.push('📅 Рӯзи супоридан ба шумо: '+fdate(r.deliverBy));
+    L.push('','🧾 Инвойс INV-'+c+':');itemsOf(r).filter(i=>!i.off).forEach(i=>L.push('• '+inm(i)+(i.q>1?' × '+i.q:'')+(i.price?' — '+money(i.price):'')));
+    L.push('Ҷамъ: '+money(r.price),'Пардохт шуд: '+money(paidOf(r)),'Боқимонда: '+money(balOf(r)));
+    L.push('','Акси бор ва инвойсро дар сайт бинед:',siteUrl(),C.name);return L.join('\n')}
   if(r.status==='delivered')return`Ассалому алайкум, ${n}! Закази №${c} тайёр/супорида шуд.${balOf(r)?' Боқимонда: '+money(balOf(r))+'.':''} Ташаккур!\n${C.name}`;
   if(r.status==='notfound')return`Ассалому алайкум, ${n}! Афсӯс, қисм аз дархости №${c} ҳоло ёфт нашуд.\n${C.name}`;
   return`Ассалому алайкум, ${n}! Дархости №${c} дар ҷустуҷӯ аст.\n${C.name}`;
@@ -1157,9 +1170,10 @@ function customerView(){
     const itemsBox=`<div class="items">${its.map((it,i)=>`<div class="it ${it.off?'off':''}"><span class="nm">${inmH(it)}${it.q>1?' × '+it.q:''}</span><span class="bar">${showP&&it.price?`<span class="price small">${money(it.price)}</span>`:''}${r.status==='offered'&&its.length>1?`<button class="link" data-act="item-off" data-id="${r.id}" data-i="${i}">${it.off?'Бозгардон':'Лозим нест'}</button>`:''}</span></div>`).join('')}${showP?`<div class="sum"><span>Ҷамъ</span><span class="price">${money(r.price)}</span></div>`:''}</div>`;
     const offer=r.status==='offered'?`<div class="offer"><div><div class="small">Қисм ёфт шуд${r.warrantyDays?' · кафолат '+r.warrantyDays+' рӯз':''}</div><div class="price">${money(r.price)}</div>${r.offerNote?`<div class="small">${esc(r.offerNote)}</div>`:''}</div><div class="spacer"></div><button class="btn ok" data-act="cust-accept" data-id="${r.id}">Заказ медиҳам</button><button class="btn bad" data-act="cust-decline" data-id="${r.id}">Лозим нест</button></div>`:'';
     const pay=SOLD.includes(r.status)?`<div class="bal"><div class="ok-b"><span>Пардохт шуд</span><b>${money(paidOf(r))}</b></div><div class="${balOf(r)?'due-b':''}"><span>Боқимонда</span><b>${money(balOf(r))}</b></div>${r.tracking?`<div><span>Пайгирӣ</span><b>${esc(r.tracking)}</b></div>`:''}${r.warrantyDays&&r.deliveredAt?`<div><span>Кафолат то</span><b>${fdate(r.deliveredAt+r.warrantyDays*864e5)}</b></div>`:''}</div>`:'';
+    const ship=['shipped','delivered'].includes(r.status)&&(r.cargo||r.tracking)?`<div class="shipbox"><div class="sb-h">📦 ${r.status==='delivered'?'Супорида шуд':'Бор дар роҳ аст'}</div><div class="shipinfo"><div><span>Карго</span><b>${esc(r.cargo||'—')}</b></div><div><span>Рақами карго</span><b>${esc(r.tracking||'—')}</b></div>${+r.weight?`<div><span>Вазн</span><b>${r.weight} кг</b></div>`:''}${r.deliverBy?`<div><span>Рӯзи супоридан</span><b>${fdate(r.deliverBy)}</b></div>`:''}</div></div>`:'';
     const cancel=['new','assigned'].includes(r.status)?`<div><button class="btn bad" data-act="cust-cancel" data-id="${r.id}">Бекор кардан</button></div>`:'';
     return`<div class="ccard ${r.status==='offered'?'is-offer':''}"><div class="top"><span class="tag">${esc(r.code)}</span><b>${esc(r.car)} ${esc(r.year)}</b><span class="spacer"></span><span class="time">${ago(r.createdAt)}</span></div>
-      <div class="small muted">${r.vin?esc(C.f3)+' '+esc(r.vin)+' · ':''}${esc(COND[r.condition]||'')} · мӯҳлат ${URG[r.urgency||'d3'].l}</div>${prog}${itemsBox}${photosHtml(r)}${offer}${pay}${SOLD.includes(r.status)?`<div><button class="btn" data-act="inv" data-id="${r.id}">🧾 Инвойс</button></div>`:''}${cancel}</div>`;
+      <div class="small muted">${r.vin?esc(C.f3)+' '+esc(r.vin)+' · ':''}${esc(COND[r.condition]||'')} · мӯҳлат ${URG[r.urgency||'d3'].l}</div>${prog}${ship}${itemsBox}${photosHtml(r)}${offer}${pay}${SOLD.includes(r.status)?`<div><button class="btn" data-act="inv" data-id="${r.id}">🧾 Инвойс</button></div>`:''}${cancel}</div>`;
   });
   const offers=list.filter(r=>r.status==='offered');
   const tab=S.cTab||(offers.length?'offers':list.length?'list':'new');
@@ -1360,16 +1374,24 @@ function sheet(){
 </details>
       <details class="card dt" data-k="del" ${S.det.del?'open':''}><summary><h3>Нест кардан</h3></summary><div class="small muted">Дархост аз ҳама ҷо нест мешавад — аз панели роҳбар, коргар ва муштарӣ. Инро баргардондан мумкин нест.</div>
       <div class="bar"><button class="btn bad" data-act="delreq" data-id="${r.id}">${S.confirmDel===r.id?'Ҳа, тамоман нест кун':'Дархостро нест кардан'}</button>${S.confirmDel===r.id?`<button class="btn" data-act="delno">Не</button>`:''}</div></details>`;
-    if(r.status!=='offered')act+=msgCard;
+    if(r.status==='shipped'&&ph0){const gp=(r.photos||[]).filter(p=>p.k==='g');
+      act=`<div class="card pricing"><h3>Қадами охир: ба муштарӣ фиристодан</h3>
+        <div class="shipinfo"><div><span>Карго</span><b>${esc(r.cargo||'—')}</b></div><div><span>Рақами карго</span><b>${esc(r.tracking||'—')}</b></div><div><span>Вазн</span><b>${+r.weight?r.weight+' кг':'—'}</b></div><div><span>Рӯзи супоридан</span><b>${r.deliverBy?fdate(r.deliverBy):'—'}</b></div></div>
+        ${gp.length?photosHtml({photos:gp}):'<div class="warn-note">Акси бор нест.</div>'}
+        <details class="dt"><summary class="small" style="font-weight:700">Вазн ё санаро иваз кардан</summary><div class="grid"><label>Вазн (кг)<input id="a-kg-${r.id}" type="number" min="0" step="0.1" value="${r.weight||''}"></label><label>Рӯзи супоридан<input id="a-dd-${r.id}" type="date" value="${r.deliverBy?isoD(r.deliverBy):''}"></label></div><div><button class="btn" data-act="shipinfo" data-id="${r.id}">Сабт</button></div></details>
+        <div class="small muted">Дар паём инвойс, карго, рақам, вазн, рӯзи супоридан ва пайванд ба сайт (акси бор ва инвойс) ҳаст. Барои акс: инвойсро кушоед → «Ба WhatsApp», ё аксро аз ин ҷо нигоҳ дошта фиристед.</div>
+        <div class="bar"><a class="btn pri" data-act="sentcust" data-id="${r.id}" href="${waLink(ph0,custMsg(r))}" target="_blank" rel="noopener">📲 Ба муштарӣ фиристодан</a><button class="btn" data-act="inv" data-id="${r.id}">🧾 Инвойс</button></div>
+        ${r.sentToCustAt?`<div class="small" style="color:var(--ok)">✓ Фиристода шуд: ${fmt(r.sentToCustAt)}</div>`:''}</div>`+act}
+    else if(r.status!=='offered')act+=msgCard;
   }
   if(v==='worker'){
     if(actIds().includes(r.orderWorkerId)&&['ordered','shipped'].includes(r.status)){const st=r.ordStage||'assigned';
       act+=`<div class="card pricing"><h3>Заказ: тайёр кардан ва ба карго</h3>
         <div class="bal"><div><span>Паставшик</span><b style="font-family:var(--body)">${esc(r.supplier||'—')}</b></div>${r.supplierPhone?`<div><span>Телефон</span><b><a class="link" href="${waLink(r.supplierPhone,'Салом! Барои заказ №'+r.code+':\n'+waText(r))}" target="_blank" rel="noopener">${esc(r.supplierPhone)}</a></b></div>`:''}${r.cost?`<div><span>Нархи харид</span><b>${money(r.cost)}</b></div>`:''}</div>
         <div class="small">Ҳолат: <b>${esc(r.status==='shipped'?OST.shipped:OST[st])}</b></div>
-        ${r.status==='shipped'?`<div class="small">Карго: <b>${esc(r.cargo||'—')}</b>${r.tracking?' · '+esc(r.tracking):''}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Боз акс илова кардан<input type="file" accept="image/*" multiple data-up="${r.id}" data-kind="g"></label>`:''}
+        ${r.status==='shipped'?`<div class="small">Карго: <b>${esc(r.cargo||'—')}</b>${r.tracking?' · '+esc(r.tracking):''}${+r.weight?' · '+r.weight+' кг':''}${r.deliverBy?' · то '+fdate(r.deliverBy):''}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Боз акс илова кардан<input type="file" accept="image/*" multiple data-up="${r.id}" data-kind="g"></label>`:''}
         ${r.status==='ordered'?`<div class="bar">${st==='assigned'?`<button class="btn pri" data-act="ostage" data-id="${r.id}" data-v="bought">Аз паставшик гирифтам</button>`:''}${st==='bought'?`<button class="btn pri" data-act="ostage" data-id="${r.id}" data-v="packed">Бастабандӣ шуд</button>`:''}</div>
-        ${st==='packed'?`<div class="cargo-ph"><div class="small" style="font-weight:700">1. Акси бор дар карго ${(r.photos||[]).some(p=>p.k==='g')?'<span class="best">гузошта шуд ✓</span>':'<span class="warn-note">(ҳатмӣ)</span>'}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Акси бор / накладной<input type="file" accept="image/*" capture="environment" multiple data-up="${r.id}" data-kind="g"></label></div><div class="small" style="font-weight:700">2. Маълумоти карго</div><div class="grid"><label>Номи карго<input id="o-cargo-${r.id}" value="${esc(r.cargo||'')}" placeholder="Масалан: Cargo Dushanbe"></label><label>Рақами пайгирӣ / накладной<input id="o-trk-${r.id}" value="${esc(r.tracking||'')}"></label></div><div><button class="btn ok" data-act="ocargo" data-id="${r.id}">Ба карго супоридам</button></div>`:''}`:''}</div>`;}
+        ${st==='packed'?`<div class="cargo-ph"><div class="small" style="font-weight:700">1. Акси бор дар карго ${(r.photos||[]).some(p=>p.k==='g')?'<span class="best">гузошта шуд ✓</span>':'<span class="warn-note">(ҳатмӣ)</span>'}</div>${photosHtml({photos:(r.photos||[]).filter(p=>p.k==='g')})}<label class="upl">${ICON_CAM}Акси бор / накладной<input type="file" accept="image/*" capture="environment" multiple data-up="${r.id}" data-kind="g"></label></div><div class="small" style="font-weight:700">2. Маълумоти карго</div><div class="grid"><label>Номи карго<input id="o-cargo-${r.id}" value="${esc(r.cargo||'')}" placeholder="Масалан: Cargo Dushanbe"></label><label>Рақами карго / накладной<input id="o-trk-${r.id}" value="${esc(r.tracking||'')}"></label><label>Вазни бор (кг)<input id="o-kg-${r.id}" type="number" min="0" step="0.1" inputmode="decimal" value="${r.weight||''}"></label><label>Рӯзи супоридан ба муштарӣ<input id="o-dd-${r.id}" type="date" value="${r.deliverBy?isoD(r.deliverBy):''}"></label></div><div><button class="btn ok" data-act="ocargo" data-id="${r.id}">Ба карго супоридам</button></div>`:''}`:''}</div>`;}
     if(r.status==='assigned'&&(!r.workerId||isMine))act+=`<div class="card"><h3>Кор</h3><div><button class="btn pri" data-act="take" data-id="${r.id}">Ба кор гирифтан</button></div></div>`;
     if(['searching','found'].includes(r.status)&&isMine){
       if((r.quotes||[]).length)act+=quotesHtml(r,v,'list');
@@ -1607,6 +1629,8 @@ document.addEventListener('click',async e=>{
       if(before===after){render();return}
       await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
+    case'sentcust':if(r)upd(id,{sentToCustAt:Date.now()},'Ба муштарӣ фиристода шуд (WhatsApp)',true);return;
+    case'shipinfo':{if(!r)return;const kg=fnum('a-kg-'+id),dd=val('a-dd-'+id);await upd(id,{weight:kg||0,deliverBy:dd?new Date(dd+'T12:00').getTime():null},'Карго: '+(kg||0)+' кг'+(dd?' · то '+dd:''));return}
     case'custseg':S.custSeg=b.dataset.v;break;
     case'custopen':S.custOpen=S.custOpen===b.dataset.v?null:b.dataset.v;break;
     case'invf':S.invF=b.dataset.v;break;
@@ -1699,7 +1723,8 @@ document.addEventListener('click',async e=>{
       if(await upd(id,{orderWorkerId:w,ordStage:r.ordStage||'assigned'},'Масъули заказ: '+u.name))setDoc(doc(db,'priv',id),{orderWorkerId:w},{merge:true}).catch(()=>{});return}
     case'ostage':{const s=b.dataset.v;await upd(id,{ordStage:s},'Заказ: '+OST[s]);return}
     case'ocargo':{const cg=val('o-cargo-'+id),tk=val('o-trk-'+id);if(!(r.photos||[]).some(p=>p.k==='g')){toast('Аввал акси борро дар карго гузоред');return}if(!cg){toast('Номи каргоро нависед');return}
-      await upd(id,{status:'shipped',ordStage:'shipped',cargo:cg,tracking:tk,shippedAt:Date.now()},'Ба карго дода шуд: '+cg+(tk?' · '+tk:''));return}
+      const kg=fnum('o-kg-'+id),dd=val('o-dd-'+id);if(!(kg>0)){toast('Вазни борро (кг) нависед');return}if(!dd){toast('Рӯзи супоридан ба муштариро интихоб кунед');return}
+      await upd(id,{status:'shipped',ordStage:'shipped',cargo:cg,tracking:tk,weight:kg,deliverBy:new Date(dd+'T12:00').getTime(),shippedAt:Date.now()},'Ба карго дода шуд: '+cg+(tk?' · '+tk:'')+' · '+kg+' кг · то '+dd);return}
     case'admno':S.confirmAdm=null;break;
     case'admdel':{const em=b.dataset.v;if(S.confirmAdm!==em){S.confirmAdm=em;break}try{await deleteDoc(doc(db,'admins',em));S.confirmAdm=null;toast('Хориҷ шуд: '+em)}catch(err){toast('Нашуд: '+errTxt(err))}return}
     case'delno':S.confirmDel=null;break;
