@@ -560,7 +560,15 @@ const overdue=r=>PRE.includes(r.status)&&Date.now()>deadline(r);
 function dueTxt(r){if(!PRE.includes(r.status))return'';const ms=deadline(r)-Date.now();if(ms<0)return'<span class="due late">Мӯҳлат гузашт</span>';const h=Math.floor(ms/3600000);return`<span class="due ${h<6?'soon':''}">${h<24?Math.max(1,h)+' соат монд':Math.floor(h/24)+' рӯз монд'}</span>`}
 function custName(r){return r.customerId&&S.users[r.customerId]?S.users[r.customerId].name:(r.customerName||'Муштарӣ')}
 function custPhone(r){return r.customerId&&S.users[r.customerId]?S.users[r.customerId].phone:(r.customerPhone||'')}
-function waText(r){return`1. ${r.car||''}\n2. ${r.year||''}\n3. ${itemsOf(r).filter(i=>!i.off).map(i=>inm(i)+(i.q>1?' × '+i.q:'')).join('\n   ')}${r.vin?'\nVIN: '+r.vin:''}`}
+function waText(r){
+  const its=itemsOf(r).filter(i=>!i.off),car=(r.car||'').trim(),hasCar=car&&car!=='—';
+  const line=(i,k)=>`${its.length>1?(k+1)+') ':''}${i.code||i.n}${i.code&&i.n&&i.n!==i.code?' ('+i.n+')':''}${i.q>1?' — '+i.q+' дона':''}`;
+  const L=[];
+  if(hasCar){L.push('1. '+car);L.push('2. '+(r.year||'—'));L.push('3. '+(its.length>1?'Қисмҳо ('+its.length+'):':line(its[0],0)));if(its.length>1)its.forEach((i,k)=>L.push(line(i,k)))}
+  else{L.push(its.some(i=>i.code)?'Кодҳо ('+its.length+'):':'Қисмҳо ('+its.length+'):');its.forEach((i,k)=>L.push(line(i,k)))}
+  if(r.vin)L.push('VIN: '+r.vin);
+  if(r.condition==='new')L.push('Намуд: '+(C.g1||'Нав'));else if(r.condition==='used')L.push('Намуд: '+(C.g2||'Кӯҳна'));
+  return L.join('\n')}
 function custMsg(r){
   const n=custName(r),c=r.code;
   if(r.status==='offered')return`Ассалому алайкум, ${n}!\nДархости №${c} (${r.car}) ёфт шуд:\n${itemsOf(r).filter(i=>!i.off).map(i=>'• '+inm(i)+(i.q>1?' × '+i.q:'')+(i.price?' — '+money(i.price):'')).join('\n')}\nҶамъ: ${money(r.price)}${r.warrantyDays?'\nКафолат: '+r.warrantyDays+' рӯз':''}\nБарои заказ ба сайт ворид шавед: ${location.origin+location.pathname}\n${C.name}`;
