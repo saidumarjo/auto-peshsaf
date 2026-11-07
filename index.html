@@ -668,6 +668,16 @@ button.wc{cursor:pointer}
 .shipinfo b{font-size:14.5px;overflow-wrap:anywhere}
 .shipbox{border:1px solid color-mix(in srgb,var(--ok) 45%,var(--line));background:color-mix(in srgb,var(--ok) 7%,var(--surface));border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .sb-h{font-weight:800;color:var(--ok)}
+
+.wsteps ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wsteps li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);font-weight:600;font-size:14px}
+.wsteps li i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;flex:none;background:var(--surface);border:1px solid var(--line)}
+.wsteps li span{flex:1}
+.wsteps li b{font-size:11px;color:var(--brass);text-transform:uppercase;letter-spacing:.06em}
+.wsteps li.done{color:var(--ok)}.wsteps li.done i{background:var(--ok);color:#fff;border-color:var(--ok)}
+.wsteps li.cur{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}.wsteps li.cur i{background:var(--brass);color:#14213a;border-color:var(--brass)}
+.wsteps li.lock{opacity:.5}
+.card.locked{opacity:.7;border-style:dashed}
 </style>
 </head>
 <body>
@@ -854,6 +864,16 @@ function rebuild(){
 function periodStart(){const d=new Date();d.setHours(0,0,0,0);if(S.period==='today')return+d;if(S.period==='month'){d.setDate(1);return+d}if(S.period==='week'){d.setDate(d.getDate()-6);return+d}return 0}
 const inPer=r=>(r.createdAt||0)>=periodStart();
 const wasFound=r=>!!r.foundAt||['found','offered',...SOLD,'returned'].includes(r.status)||(r.status==='cancelled'&&!!r.offeredAt);
+function wStepsHtml(r,isMine){
+  const me=actIds(),isO=me.includes(r.orderWorkerId),os=r.ordStage||'',sh=['shipped','delivered'].includes(r.status);
+  const taken=!!r.workerId&&r.status!=='assigned'&&r.status!=='new',hasQ=(r.quotes||[]).length>0,found=wasFound(r)&&r.status!=='searching';
+  let S_;
+  if(isO&&['ordered','shipped','delivered'].includes(r.status))S_=[['Аз паставшик гирифтан',sh||['bought','packed','shipped'].includes(os)],['Бастабандӣ',sh||['packed','shipped'].includes(os)],['Акси бор + карго',sh]];
+  else if(isMine||(r.status==='assigned'&&!r.workerId))S_=[['Ба кор гирифтан',taken],['Нархи паставшик',hasQ||found],['Ёфт шуд',found],['Роҳбар нарх мефиристад',wasOffered(r)]];
+  else return'';
+  const cur=S_.findIndex(x=>!x[1]);
+  return`<div class="card wsteps"><h3>Қадамҳои шумо</h3><ol>${S_.map(([l,d],i)=>`<li class="${d?'done':i===cur?'cur':'lock'}"><i>${d?'✓':i===cur?i+1:'🔒'}</i><span>${l}</span>${i===cur?'<b>ҳозир</b>':''}</li>`).join('')}</ol></div>`;
+}
 function procHtml(r){
   const os=r.ordStage||'',sh=['shipped','delivered'].includes(r.status),sold=SOLD.includes(r.status);
   const S_=[['Дархост',1],['Масъул',!!r.workerId],['Нарх ёфт',wasFound(r)],['Ба муштарӣ',wasOffered(r)],['Қабул кард',sold],['Масъули заказ',!!r.orderWorkerId],['Харид',sh||['bought','packed','shipped'].includes(os)],['Баста',sh||['packed','shipped'].includes(os)],['Карго + акс',sh],['Музд',!!r.comPaid||(sold&&!comWorker(r))],['Фоида',sh&&(!!r.comPaid||!comWorker(r))]];
@@ -1331,7 +1351,7 @@ function sheet(){
     ${adm?`<dt>Муштарӣ</dt><dd>${esc(custName(r))} ${custPhone(r)?'· <span style="font-family:var(--mono)">'+esc(custPhone(r))+'</span>':''}</dd>`:''}
     <dt>Масъул</dt><dd>${r.workerId?`<b>${esc(uname(r.workerId))}</b>`:'<span class="who none">таъин нашуд</span>'}${r.assignedAt&&r.foundAt?` · ёфт дар ${hrs((r.foundAt-r.assignedAt)/36e5)}`:''}</dd>${r.workerNote?`<dt>Эзоҳи коргар</dt><dd>${esc(r.workerNote)}</dd>`:''}${r.returnReason?`<dt>Сабаби бозгашт</dt><dd>${esc(r.returnReason)}</dd>`:''}</dl>`;
   const canEd=adm||(isMine&&['assigned','searching','found'].includes(r.status));
-  const wPriceMode=v==='worker'&&((['searching','found'].includes(r.status)&&isMine)||(r.status==='assigned'&&(!r.workerId||isMine)));
+  const wPriceMode=v==='worker'&&['searching','found'].includes(r.status)&&isMine;
   const ed=S.editIt&&S.editIt.id===r.id?S.editIt.i:-1;
   const itemsBox=`<div class="items">${its.map((it,i)=>i===ed?`<div class="it-ed"><div class="small muted">Код ё номро иваз кунед. Коди кӯҳна нигоҳ дошта мешавад.</div>
       <input id="ie-code" value="${esc(it.code||'')}" placeholder="Коди нав" autocapitalize="characters" spellcheck="false" style="font-family:var(--mono)">
@@ -1415,7 +1435,8 @@ function sheet(){
     if(r.status==='assigned'&&(!r.workerId||isMine))act+=`<div class="card"><h3>Кор</h3><div><button class="btn pri" data-act="take" data-id="${r.id}">Ба кор гирифтан</button></div></div>`;
     if(['searching','found'].includes(r.status)&&isMine){
       if((r.quotes||[]).length)act+=quotesHtml(r,v,'list');
-      if(r.status==='searching')act+=`<div class="card"><h3>Натиҷа</h3><label>Эзоҳ ба роҳбар<input id="w-note-${r.id}" value="${esc(r.workerNote||'')}" placeholder="Сифат, мӯҳлат, оригинал/копия"></label>
+      if(r.status==='searching'&&!(r.quotes||[]).length)act+=`<div class="card locked"><h3>🔒 Натиҷа</h3><div class="small muted">Аввал нархи паставшикро дар «Қисмҳо ва нарх» сабт кунед — баъд «Ёфт шуд» кушода мешавад.</div></div>`;
+      else if(r.status==='searching')act+=`<div class="card"><h3>Натиҷа</h3><label>Эзоҳ ба роҳбар<input id="w-note-${r.id}" value="${esc(r.workerNote||'')}" placeholder="Сифат, мӯҳлат, оригинал/копия"></label>
         <div class="bar"><button class="btn ok" data-act="found" data-id="${r.id}" ${(r.quotes||[]).length?'':'disabled'}>Ёфт шуд</button><button class="btn bad" data-act="notfound" data-id="${r.id}">Ёфт нашуд</button></div>${(r.quotes||[]).length?'':'<div class="small muted">Барои «Ёфт шуд» камаш як нарх илова кунед.</div>'}</div>`;
       else act+=`<div class="note">Роҳбар нархро интихоб мекунад ва ба муштарӣ мефиристад.</div>`;
     }else if((r.quotes||[]).length&&isMine)act+=quotesHtml(r,v,false);
@@ -1424,7 +1445,7 @@ function sheet(){
   const logs=r.log.concat(r.plog).sort((a,b)=>b.t-a.t);
   const log=`<details class="card dt" data-k="log" ${S.det.log?'open':''}><summary><h3>Таърих</h3></summary><ul class="log">${logs.map(l=>`<li><time>${fmt(l.t)}</time><span>${esc(l.s)} <span class="muted">· ${esc(uname(l.by))}</span></span></li>`).join('')}</ul></details>`;
   return`<div class="sheet-bg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="sheet-h"><span class="tag">${esc(r.code)}</span>${pill(r.status)}<span class="urg ${r.urgency||'d3'}">${URG[r.urgency||'d3'].l}</span><button class="x" data-act="close" aria-label="Пӯшидан">×</button><div class="ttl">${esc(titleOf(r))}</div></div>
-    <div class="card">${info}</div>${adm?procHtml(r):''}${wPriceMode?`<div class="card pricing"><h3>Қисмҳо ва нарх</h3>${quoteForm(r,false)}</div>`:`<div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div>`}<div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
+    <div class="card">${info}</div>${adm?procHtml(r):v==='worker'?wStepsHtml(r,isMine):''}${wPriceMode?`<div class="card pricing"><h3>Қисмҳо ва нарх</h3>${quoteForm(r,false)}</div>`:`<div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div>`}<div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
 }
 
 function invoiceView(){
