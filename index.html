@@ -865,14 +865,17 @@ function periodStart(){const d=new Date();d.setHours(0,0,0,0);if(S.period==='tod
 const inPer=r=>(r.createdAt||0)>=periodStart();
 const wasFound=r=>!!r.foundAt||['found','offered',...SOLD,'returned'].includes(r.status)||(r.status==='cancelled'&&!!r.offeredAt);
 function wStepsHtml(r,isMine){
-  const me=actIds(),isO=me.includes(r.orderWorkerId),os=r.ordStage||'',sh=['shipped','delivered'].includes(r.status);
-  const taken=!!r.workerId&&r.status!=='assigned'&&r.status!=='new',hasQ=(r.quotes||[]).length>0,found=wasFound(r)&&r.status!=='searching';
-  let S_;
-  if(isO&&['ordered','shipped','delivered'].includes(r.status))S_=[['Аз паставшик гирифтан',sh||['bought','packed','shipped'].includes(os)],['Бастабандӣ',sh||['packed','shipped'].includes(os)],['Акси бор + карго',sh]];
-  else if(isMine||(r.status==='assigned'&&!r.workerId))S_=[['Ба кор гирифтан',taken],['Нархи паставшик',hasQ||found],['Ёфт шуд',found],['Роҳбар нарх мефиристад',wasOffered(r)]];
-  else return'';
+  const me=actIds(),isO=!!r.orderWorkerId&&me.includes(r.orderWorkerId),os=r.ordStage||'',sh=['shipped','delivered'].includes(r.status),sold=SOLD.includes(r.status);
+  const taken=!!r.workerId&&!['assigned','new'].includes(r.status),hasQ=(r.quotes||[]).length>0,found=wasFound(r)&&r.status!=='searching';
+  const oSteps=[['Аз паставшик гирифтан',sh||['bought','packed','shipped'].includes(os)],['Бастабандӣ',sh||['packed','shipped'].includes(os)],['Акси бор + карго',sh]];
+  let S_=[];
+  if(isMine||(r.status==='assigned'&&!r.workerId))S_=[['Ба кор гирифтан',taken],['Нархи паставшик',hasQ||found],['Ёфт шуд',found],['Роҳбар нарх ба муштарӣ мефиристад',wasOffered(r)],['Муштарӣ заказ медиҳад',sold],['Роҳбар масъули заказро таъин мекунад',!!r.orderWorkerId]];
+  if(isO)S_=S_.concat(oSteps);
+  else if(isMine&&r.orderWorkerId)S_.push(['Заказро '+uname(r.orderWorkerId)+' тайёр мекунад',sh]);
+  if(!S_.length)return'';
   const cur=S_.findIndex(x=>!x[1]);
-  return`<div class="card wsteps"><h3>Қадамҳои шумо</h3><ol>${S_.map(([l,d],i)=>`<li class="${d?'done':i===cur?'cur':'lock'}"><i>${d?'✓':i===cur?i+1:'🔒'}</i><span>${l}</span>${i===cur?'<b>ҳозир</b>':''}</li>`).join('')}</ol></div>`;
+  const wait=cur>=0&&/Роҳбар|Муштарӣ|тайёр мекунад/.test(S_[cur][0]);
+  return`<div class="card wsteps"><h3>Қадамҳои шумо</h3><ol>${S_.map(([l,d],i)=>`<li class="${d?'done':i===cur?'cur':'lock'}"><i>${d?'✓':i===cur?i+1:'🔒'}</i><span>${esc(l)}</span>${i===cur?`<b>${wait?'интизор':'ҳозир'}</b>`:''}</li>`).join('')}</ol>${wait?'<div class="small muted">Ин қадам аз шумо нест — интизор шавед. Вақте иҷро шуд, қадами навбатӣ худаш кушода мешавад.</div>':''}</div>`;
 }
 function procHtml(r){
   const os=r.ordStage||'',sh=['shipped','delivered'].includes(r.status),sold=SOLD.includes(r.status);
