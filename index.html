@@ -678,6 +678,8 @@ button.wc{cursor:pointer}
 .wsteps li.cur{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}.wsteps li.cur i{background:var(--brass);color:#14213a;border-color:var(--brass)}
 .wsteps li.lock{opacity:.5}
 .card.locked{opacity:.7;border-style:dashed}
+
+.paid-full{text-align:center;font-weight:800;color:var(--ok);background:var(--ok-bg);border-radius:12px;padding:12px}
 </style>
 </head>
 <body>
@@ -1407,8 +1409,10 @@ function sheet(){
     if(SOLD.includes(r.status)||r.status==='returned'){
       const pays=(r.payments||[]);
       act+=`<div class="card"><h3>Пардохт</h3><div class="bal"><div><span>Ҷамъ</span><b>${money(r.price)}</b></div><div class="ok-b"><span>Пардохт шуд</span><b>${money(paidOf(r))}</b></div><div class="${balOf(r)?'due-b':''}"><span>Боқимонда</span><b>${money(balOf(r))}</b></div></div>
-        ${pays.length?`<div>${pays.map(p=>`<div class="pay"><span>${fmt(p.t)} · ${p.cur&&p.cur!==C.cur?num(p.orig)+' '+esc(p.cur)+' ÷ '+p.rate:''} ${esc(p.note||'')}</span><b class="price">${money(p.a)}</b></div>`).join('')}</div>`:''}
-        ${r.status!=='returned'?`<div class="grid"><label>Маблағ<input id="p-amt-${r.id}" type="number" step="0.01" min="0" value="${balOf(r)||''}"></label><label>Асъор<select id="p-cur-${r.id}"><option value="${esc(C.cur)}">${esc(C.cur)}</option>${C.cur2?`<option value="${esc(C.cur2)}">${esc(C.cur2)}</option>`:''}</select></label>${C.cur2?`<label>Курс (${esc(C.cur2)} барои 1 ${esc(C.cur)})<input id="p-rate-${r.id}" type="number" step="0.01" min="0" value="${S.lastRate||C.rate2}"></label>`:''}<label>Эзоҳ<input id="p-note-${r.id}" placeholder="Нақд, корт, Алиф…"></label></div><div><button class="btn ok" data-act="addpay" data-id="${r.id}">Пардохтро сабт кардан</button></div>`:''}</div>`;
+        ${pays.length?`<div>${pays.map((p,pi)=>`<div class="pay"><span>${fmt(p.t)} · ${p.cur&&p.cur!==C.cur?num(p.orig)+' '+esc(p.cur)+' ÷ '+p.rate:''} ${esc(p.note||'')}</span><span class="bar"><b class="price">${money(p.a)}</b>${S.confirmPayDel===r.id+'-'+pi?`<button class="btn bad" style="height:30px" data-act="delpay" data-id="${r.id}" data-v="${pi}">Ҳа, нест</button>`:`<button class="itbtn" data-act="delpay" data-id="${r.id}" data-v="${pi}" aria-label="Нест кардан" title="Нест кардан">✕</button>`}</span></div>`).join('')}</div>`:''}
+        ${paidOf(r)>(+r.price||0)+0.009?`<div class="alert bad-a">Зиёд пардохт шудааст: ${money(paidOf(r)-(+r.price||0))}. Пардохти такрориро бо ✕ нест кунед.</div>`:''}
+        ${r.status!=='returned'&&balOf(r)<=0&&+r.price>0?`<div class="paid-full">✓ Пурра пардохт шуд</div>`:''}
+        ${r.status!=='returned'&&balOf(r)>0?`<div class="grid"><label>Маблағ (то ${num(balOf(r))})<input id="p-amt-${r.id}" type="number" step="0.01" min="0" value="${balOf(r)||''}"></label><label>Асъор<select id="p-cur-${r.id}"><option value="${esc(C.cur)}">${esc(C.cur)}</option>${C.cur2?`<option value="${esc(C.cur2)}">${esc(C.cur2)}</option>`:''}</select></label>${C.cur2?`<label>Курс (${esc(C.cur2)} барои 1 ${esc(C.cur)})<input id="p-rate-${r.id}" type="number" step="0.01" min="0" value="${S.lastRate||C.rate2}"></label>`:''}<label>Эзоҳ<input id="p-note-${r.id}" placeholder="Нақд, корт, Алиф…"></label></div><div><button class="btn ok" data-act="addpay" data-id="${r.id}">Пардохтро сабт кардан</button></div>`:''}</div>`;
       if(r.status!=='returned')act+=`<div class="card"><h3>Расонидан ва бозгашт</h3>
         ${r.status==='ordered'?`<div class="bar"><input id="t-trk-${r.id}" placeholder="Рақами пайгирӣ / ронанда" value="${esc(r.tracking||'')}" style="flex:1"><button class="btn" data-act="ship" data-id="${r.id}">Дар роҳ</button></div>`:''}
         ${['ordered','shipped'].includes(r.status)?`<div><button class="btn ok" data-act="deliver" data-id="${r.id}">Ба муштарӣ дода шуд</button></div>`:''}
@@ -1756,10 +1760,14 @@ document.addEventListener('click',async e=>{
     case'item-off':{const i=+b.dataset.i,off=new Set((S.rawReqs[id]||{}).custOff||[]);off.has(i)?off.delete(i):off.add(i);
       const its=itemsOf(S.rawReqs[id]||r);if(its.every((x,k)=>x.off||off.has(k))){toast('Камаш як қисм бояд монад. Ё «Лозим нест»-ро пахш кунед.');return}
       await upd(id,{custOff:[...off]},(off.has(i)?'Лозим нест: ':'Баргардонд: ')+its[i].n);return}
-    case'addpay':{const amt=fnum('p-amt-'+id),cur=val('p-cur-'+id)||C.cur,rate=fnum('p-rate-'+id)||S.lastRate||C.rate2;if(!(amt>0)){toast('Маблағро нависед');return}
+    case'delpay':{if(!r)return;const k=id+'-'+b.dataset.v;if(S.confirmPayDel!==k){S.confirmPayDel=k;break}S.confirmPayDel=null;const ps=(r.payments||[]).slice();const rm=ps.splice(+b.dataset.v,1)[0];if(!rm)return;await upd(id,{payments:ps},'Пардохт нест карда шуд: '+money(rm.a));return}
+    case'addpay':{if(S.payBusy)return;const amt=fnum('p-amt-'+id),cur=val('p-cur-'+id)||C.cur,rate=fnum('p-rate-'+id)||S.lastRate||C.rate2;if(!(amt>0)){toast('Маблағро нависед');return}
       const x2=cur!==C.cur;const a2=x2?Math.round(amt/rate*100)/100:amt;if(x2)S.lastRate=rate;
-      const p={a:a2,cur,orig:amt,rate:x2?rate:1,note:val('p-note-'+id),t:Date.now(),by:actor()};
-      await upd(id,{payments:(r.payments||[]).concat([p])},'Пардохт: '+money(a2)+(x2?' ('+num(amt)+' '+cur+')':''));return}
+      const bal=balOf(r);if(bal<=0){toast('Ин инвойс пурра пардохт шудааст');return}
+      if(a2>bal+(x2?0.5:0.009)){toast('Маблағ аз боқимонда зиёд аст. Боқимонда: '+money(bal));return}
+      S.payBusy=true;setTimeout(()=>S.payBusy=false,3000);
+      const p={a:Math.min(a2,bal),cur,orig:amt,rate:x2?rate:1,note:val('p-note-'+id),t:Date.now(),by:actor()};
+      const ok=await upd(id,{payments:(r.payments||[]).concat([p])},'Пардохт: '+money(a2)+(x2?' ('+num(amt)+' '+cur+')':''));S.payBusy=false;if(ok)toast(balOf({...r,payments:(r.payments||[]).concat([p])})<=0?'Пурра пардохт шуд ✓':'Пардохт сабт шуд');return}
     case'ship':await upd(id,{status:'shipped',tracking:val('t-trk-'+id),shippedAt:Date.now()},'Дар роҳ'+(val('t-trk-'+id)?': '+val('t-trk-'+id):''));return;
     case'deliver':await upd(id,{status:'delivered',deliveredAt:Date.now()},'Ба муштарӣ дода шуд');return;
     case'return':{const why=val('ret-'+id);if(!why){toast('Сабаби бозгаштро нависед');return}await upd(id,{status:'returned',returnReason:why,returnedAt:Date.now()},'Баргашт: '+why);return}
