@@ -280,6 +280,124 @@ button.wstat{cursor:pointer} button.wstat:hover{border-color:color-mix(in srgb,v
 .login .card .btn.pri{width:100%}
 .pw{position:relative}.pw input{padding-right:100px}.pw .link{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;z-index:30;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+
+details.dt{gap:0}
+details.dt>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+details.dt>summary::-webkit-details-marker{display:none}
+details.dt>summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin-right:4px;transition:transform .15s}
+details.dt[open]>summary::after{transform:rotate(-135deg)}
+details.dt[open]>summary{margin-bottom:12px}
+details.dt>:not(summary)+:not(summary){margin-top:12px}
+
+/* ===== compact density ===== */
+body{font-size:14.5px;line-height:1.45}
+.hrow{gap:10px;padding-block:7px}
+.logo{width:32px;height:32px;border-radius:8px;font-size:13px}
+.brand b{font-size:15.5px}
+.brand span{font-size:11.5px}
+.iconbtn{width:32px;height:32px;border-radius:8px}
+.iconbtn svg{width:16px;height:16px}
+.seg{padding:2px;border-radius:8px}
+.seg button{padding:4px 10px;font-size:12px;border-radius:6px}
+main{padding-block:10px 84px;gap:10px}
+h1{font-size:20px} h2{font-size:16px}
+.tabs button{padding:7px 2px;margin-right:14px;font-size:13.5px}
+.chip{height:34px;padding:0 10px;font-size:13px;border-radius:8px}
+.btn{height:36px;padding:0 12px;font-size:13.5px;border-radius:8px}
+.search input{height:36px;font-size:14px}
+input,select,textarea{font-size:14.5px;padding:7px 10px;border-radius:8px}
+.kpis{gap:8px}
+.kpi{padding:8px 10px;border-radius:10px}
+.kpi span{font-size:11.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b{font-size:21px;margin-top:0}
+.kpi b small{font-size:11px}
+.kpi .go{display:none}
+.alert{padding:7px 12px;font-size:13px;border-radius:8px}
+h3{font-size:10.5px}
+.crew{padding:5px 10px 5px 5px;gap:8px;border-radius:10px;box-shadow:none}
+.crew .av,.av{width:28px;height:28px;font-size:12px}
+.crew b{font-size:13.5px}
+.crew small{font-size:11px}
+.pipe{gap:6px}
+.st{padding:4px 10px 4px 8px;font-size:12.5px;gap:6px}
+.st b{min-width:20px;padding:0 6px}
+.rqs{gap:6px}
+.rq{padding:9px 12px 9px 15px;gap:3px 10px;border-radius:10px}
+.rq .t1{font-size:15px}
+.rq .t2{font-size:12px;gap:2px 10px}
+.tag{font-size:11px;padding:1px 6px 1px 12px}
+.tag::before{left:4px}
+.pill{font-size:11px;padding:2px 8px}
+.urg{font-size:10.5px;padding:1px 6px}
+.time,.due{font-size:11.5px}
+.card{padding:12px;gap:10px;border-radius:10px}
+.note{padding:8px 10px;font-size:13px}
+.empty{padding:22px 12px}
+.empty b{font-size:15px}
+.fab{width:48px;height:48px;border-radius:14px;font-size:24px}
+.wstat{padding:10px;gap:8px}
+.wnums b{font-size:16px}
+.kv{font-size:13.5px;gap:6px 10px}
+.sheet{gap:10px}
+.sheet-h .ttl{font-size:17px}
+@media (max-width:640px){
+  .hrow>.seg button{padding:4px 6px}
+  .kpis{grid-template-columns:repeat(4,1fr);gap:6px}
+  .kpi{padding:7px 8px}
+  .kpi span{font-size:10.5px}
+  .kpi b{font-size:18px}
+  .kpi b small{display:none}
+}
+
+/* ===== app look: hero + bottom navigation ===== */
+:root{--hero1:#1c3557;--hero2:#0e1d36;--hero-ink:#ffffff;--hero-mute:rgba(255,255,255,.68);--hero-tile:rgba(255,255,255,.08);--hero-line:rgba(255,255,255,.14)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hero1:#1b2f50;--hero2:#0f1a2d;--hero-tile:rgba(255,255,255,.06)}}
+:root[data-theme="dark"]{--hero1:#1b2f50;--hero2:#0f1a2d;--hero-tile:rgba(255,255,255,.06)}
+.hero{position:relative;overflow:hidden;border-radius:16px;padding:14px;color:var(--hero-ink);background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--brass) 28%,transparent) 0%,transparent 55%),linear-gradient(150deg,var(--hero1),var(--hero2));box-shadow:0 10px 28px rgba(14,29,54,.28);display:flex;flex-direction:column;gap:12px}
+.hero::after{content:"";position:absolute;left:14px;right:14px;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--brass),transparent);opacity:.9}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.hello{font:700 19px/1.2 var(--display)}
+.hdate{font-size:12.5px;color:var(--hero-mute);margin-top:2px}
+.hper{display:flex;gap:2px;background:var(--hero-tile);border:1px solid var(--hero-line);border-radius:9px;padding:2px}
+.hper button{border:0;background:none;color:var(--hero-mute);font:700 11.5px var(--body);padding:5px 8px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.hper button.on{background:var(--hero-ink);color:var(--hero2)}
+.hkpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hk{border:1px solid var(--hero-line);background:var(--hero-tile);color:var(--hero-ink);border-radius:12px;padding:9px 8px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:1px;min-width:0;font:inherit}
+.hk:hover{background:rgba(255,255,255,.12)}
+.hk.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.hk .hi{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.1);color:var(--brass);margin-bottom:5px}
+.hk b{font:700 21px/1.1 var(--display);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hk .hl{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hk .hs{font-size:10.5px;color:var(--hero-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdebt{display:flex;align-items:center;gap:10px;border:0;border-radius:10px;padding:8px 12px;background:rgba(255,120,120,.16);color:#ffd2d2;font:inherit;font-size:13px;cursor:pointer;text-align:left}
+.hdebt b{margin-left:auto;font:700 14px var(--mono);color:#fff}
+/* bottom nav */
+.bnav{display:none}
+@media (max-width:640px){
+  .top-tabs{display:none}
+  .bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:9;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  .bnav button{position:relative;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;border-radius:10px;cursor:pointer;font:700 10.5px var(--body)}
+  .bnav button span{white-space:nowrap}
+  .bnav button.on{color:var(--primary)}
+  .bnav button.on svg{background:var(--primary-soft);border-radius:9px;padding:3px;box-sizing:content-box;margin-block:-3px}
+  .bdot{position:absolute;top:0;right:calc(50% - 20px);background:var(--bad);color:#fff;font:700 10px var(--body);font-style:normal;border-radius:999px;padding:0 5px;line-height:16px}
+  main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+  .fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+  .hkpis{gap:6px}
+  .hk{padding:8px 6px}
+  .hk b{font-size:18px}
+  .hk .hl{font-size:11px}
+  .hello{font-size:17px}
+}
+/* lighter section titles and request cards with more presence */
+.rq{border-color:color-mix(in srgb,var(--line) 70%,transparent)}
+.rq .t1{letter-spacing:.005em}
+
+.logo.img{background:#fff;padding:0;overflow:hidden}
+.logo.img img{width:100%;height:100%;object-fit:contain;display:block}
+.logo-edit{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo-edit .logo{width:64px;height:64px;border-radius:14px;font-size:22px}
 </style>
 </head>
 <body>
@@ -323,6 +441,9 @@ const PRESETS={
 const CFG_DEFAULT={name:'AUTO PESHSAF',tagline:'Deira, Dubai',phone:'',industry:'auto',cur:'AED',cur2:'TJS',rate2:2.6,...PRESETS.auto};
 let C={...CFG_DEFAULT};
 const logoTxt=()=>initials(C.name).slice(0,2)||'•';
+const logoHtml=()=>C.logo?`<div class="logo img"><img src="${esc(C.logo)}" alt="${esc(C.name)}"></div>`:`<div class="logo">${esc(logoTxt())}</div>`;
+async function logoData(file){const img=await createImageBitmap(file);const s=Math.min(1,256/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  let d=c.toDataURL('image/png');if(d.length>150000)d=c.toDataURL('image/jpeg',.85);return d}
 function applyCfg(d){
   const base=PRESETS[(d&&d.industry)||CFG_DEFAULT.industry]||PRESETS.general;
   C={...CFG_DEFAULT,...base,...(d||{})};
@@ -333,6 +454,9 @@ applyCfg(null);
 const CSTEPS=['Қабул','Ҷустуҷӯ','Ёфт шуд','Заказ','Дар роҳ','Дода шуд'];
 const CSTAGE={new:0,assigned:0,searching:1,found:1,offered:2,ordered:3,shipped:4,delivered:5};
 const PRIV_KEYS=['quotes','chosenQ','cost','supplier','supplierPhone','workerNote'];
+const IC=(p,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICONS={req:'<path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 11h6M9 15h4"/>',debt:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',rep:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6 6 0 0 0-4-5.6"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  work:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',found:'<path d="M20 6 9 17l-5-5"/>',sold:'<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>',profit:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'};
 const ICON_SEARCH='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
 const ICON_CAM='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 
@@ -341,6 +465,8 @@ const S={authReady:false,ready:false,isAdmin:false,wid:null,cid:null,denied:null
   view:null,adminTab:'req',repTab:'o',period:'month',fStatus:'active',fGroup:'all',fWorker:'all',wTab:'new',q:'',open:null,newReq:false,toast:null,busy:false,
   nItems:1,lb:null,lastRate:null,entryTab:'customer',ph:{},phLoading:{}};
 const app=document.getElementById('app');
+S.det={};S.qOpen=null;
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.k)S.det[d.dataset.k]=d.open},true);
 let unsubs=[];
 
 /* ===== helpers ===== */
@@ -457,7 +583,7 @@ function header(){
   const out=S.isAdmin||S.wid||S.cid?`<button class="iconbtn" data-act="logout" aria-label="Баромадан" title="Баромадан"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H4"/></svg></button>`:'';
   const who=S.isAdmin?'Роҳбар':S.wid||S.cid?uname(S.wid||S.cid):'';
   const sub={admin:'Панели идора',worker:'Панели коргар',customer:'Дархостҳои ман',onboard:'Воридшавӣ'}[v]||'';
-  return`<header><div class="wrap hrow"><div class="logo">${esc(logoTxt())}</div><div class="brand"><b>${esc(C.name)}</b><span>${esc(sub)}${who?' · '+esc(who):''}</span></div>${out}${sw}</div></header>`;
+  return`<header><div class="wrap hrow">${logoHtml()}<div class="brand"><b>${esc(C.name)}</b><span>${esc(sub)}${who?' · '+esc(who):''}</span></div>${out}${sw}</div></header>`;
 }
 function searchBox(ph){return`<div class="search">${ICON_SEARCH}<input id="q" type="search" placeholder="${ph}" value="${esc(S.q)}" autocomplete="off"></div>`}
 function pipe(items,cur,act){return`<div class="pipe-wrap"><div class="pipe">${items.map(([k,l,n,kk])=>`<button class="st ${cur===k?'on':''} ${kk||''}" data-act="${act}" data-v="${k}"><i></i>${esc(l)}<b>${n}</b></button>`).join('')}</div></div>`}
@@ -470,21 +596,26 @@ function cards(list,showWorker){
     <span class="t2"><span>${esc(r.car)} ${esc(r.year)}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}</span>
   </button>`}).join('')}</div>`;
 }
+const WD=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'],MO=['январ','феврал','март','апрел','май','июн','июл','август','сентябр','октябр','ноябр','декабр'];
+const todayTxt=()=>{const d=new Date();return WD[d.getDay()]+', '+d.getDate()+' '+MO[d.getMonth()]};
+const hello=()=>{const h=new Date().getHours();return h<12?'Субҳ ба хайр':h<18?'Рӯз ба хайр':'Шом ба хайр'};
 const PER=[['today','Имрӯз'],['week','7 рӯз'],['month','Ин моҳ'],['all','Ҳама вақт']];
 const perChips=()=>`<div class="bar">${PER.map(([k,l])=>`<button class="chip ${S.period===k?'on':''}" data-act="period" data-v="${k}" style="height:34px">${l}</button>`).join('')}</div>`;
 function kpis(){
   const rs=S.reqs.filter(inPer),sold=rs.filter(r=>SOLD.includes(r.status));
   const rev=sold.reduce((a,r)=>a+(+r.price||0),0),profit=sold.reduce((a,r)=>a+((+r.price||0)-(+r.cost||0)),0);
-  const debt=S.reqs.reduce((a,r)=>a+balOf(r),0);
-  return perChips()+`<div class="kpis"><button class="kpi ${S.fStatus==='active'?'on':''}" data-act="kpi" data-v="active"><span>Дар кор · ҳозир</span><b>${S.reqs.filter(r=>ACTIVE.includes(r.status)).length}</b><i class="go">Дидан →</i></button>
-    <button class="kpi ${S.fStatus==='foundall'?'on':''}" data-act="kpi" data-v="foundall"><span>Ёфт шуд · аз ${rs.length} дархост</span><b>${rs.filter(wasFound).length}</b><i class="go">Дидан →</i></button>
-    <button class="kpi ${S.fStatus==='sold'?'on':''}" data-act="kpi" data-v="sold"><span>Фурӯхта шуд · ${num(rev)} ${esc(C.cur)}</span><b>${sold.length}</b><i class="go">Дидан →</i></button>
-    <button class="kpi pos" data-act="kpi" data-v="profit"><span>Фоида</span><b>${num(profit)}<small>${esc(C.cur)}</small></b><i class="go">Ҳисобот →</i></button></div>
-    ${debt?`<button class="alert bad-a" data-act="atab" data-v="debt">Қарзи муштариён: ${money(debt)}<span class="arr">→</span></button>`:''}`;
+  const debt=S.reqs.reduce((a,r)=>a+balOf(r),0),act=S.reqs.filter(r=>ACTIVE.includes(r.status)).length;
+  const k=(v,ic,label,val,sub)=>`<button class="hk ${S.fStatus===v?'on':''}" data-act="kpi" data-v="${v}"><span class="hi">${IC(ICONS[ic],18)}</span><b>${val}</b><span class="hl">${label}</span>${sub?`<span class="hs">${sub}</span>`:''}</button>`;
+  return`<section class="hero"><div class="hero-top"><div><div class="hello">${hello()}, ${esc(S.isAdmin?'роҳбар':'')}</div><div class="hdate">${todayTxt()}</div></div>
+    <div class="hper">${PER.map(([key,l])=>`<button class="${S.period===key?'on':''}" data-act="period" data-v="${key}">${l}</button>`).join('')}</div></div>
+    <div class="hkpis">${k('active','work','Дар кор',act,'ҳозир')}${k('foundall','found','Ёфт шуд',rs.filter(wasFound).length,'аз '+rs.length)}${k('sold','sold','Фурӯхта',sold.length,num(rev)+' '+esc(C.cur))}${k('profit','profit','Фоида',num(profit),esc(C.cur))}</div>
+    ${debt?`<button class="hdebt" data-act="atab" data-v="debt"><span>Қарзи муштариён</span><b>${money(debt)}</b><span>→</span></button>`:''}</section>`;
 }
 function adminView(){
   const debtN=new Set(S.reqs.filter(r=>balOf(r)>0).map(r=>r.customerId||r.customerPhone||r.id)).size;
-  const tabs=`<div class="tabs">${[['req','Дархостҳо'],['debt','Қарзҳо'+(debtN?`<span class="badge">${debtN}</span>`:'')],['rep','Ҳисобот'],['users','Одамон'],['set','Танзимот']].map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${l}</button>`).join('')}</div>`;
+  const T=[['req','Дархостҳо'],['debt','Қарзҳо'],['rep','Ҳисобот'],['users','Одамон'],['set','Танзимот']];
+  const tabs=`<div class="tabs top-tabs">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${l}${k==='debt'&&debtN?`<span class="badge">${debtN}</span>`:''}</button>`).join('')}</div>
+    <nav class="bnav" aria-label="Менюи асосӣ">${T.map(([k,l])=>`<button class="${S.adminTab===k?'on':''}" data-act="atab" data-v="${k}">${IC(ICONS[k],22)}<span>${l}</span>${k==='debt'&&debtN?`<i class="bdot">${debtN}</i>`:''}</button>`).join('')}</nav>`;
   if(S.adminTab==='users')return tabs+usersView();
   if(S.adminTab==='set')return tabs+settingsView();
   if(S.adminTab==='rep')return tabs+reportView();
@@ -561,7 +692,10 @@ function debtView(){
 }
 function settingsView(){
   const inp=(id,label,v,extra)=>`<label>${label}<input id="s-${id}" value="${esc(v??'')}" ${extra||''}></label>`;
-  return`<form class="card" id="f-set"><h2>Ширкат</h2><div class="grid">
+  return`<form class="card" id="f-set"><h2>Ширкат</h2>
+    <div class="logo-edit">${logoHtml()}<div class="bar"><label class="upl">${IC('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/>',16)}${C.logo?'Логотипро иваз кардан':'Логотип гузоштан'}<input type="file" id="s-logo" accept="image/png,image/jpeg,image/webp"></label>${C.logo?'<button type="button" class="btn bad" data-act="logodel">Нест кардан</button>':''}</div>
+    <div class="small muted">Расми мураббаъ беҳтар аст (PNG ё JPG). Логотип дар сарлавҳа ва саҳифаи воридшавӣ дида мешавад.</div></div>
+    <div class="grid">
     ${inp('name','Номи ширкат',C.name,'required maxlength="40"')}${inp('tagline','Суроға ё шиор',C.tagline,'maxlength="60"')}${inp('phone','WhatsApp-и ширкат',C.phone,'inputmode="tel"')}</div>
     <h2>Соҳа</h2><div class="small muted">Соҳаро интихоб кунед — номи майдонҳои дархост худкор иваз мешаванд. Баъд метавонед ҳар номро дастӣ ислоҳ кунед.</div>
     <div class="grid"><label>Соҳа<select id="s-industry" data-act="industry">${Object.entries(PRESETS).map(([k,p])=>`<option value="${k}" ${C.industry===k?'selected':''}>${esc(p.label)}</option>`).join('')}</select></label></div>
@@ -643,7 +777,7 @@ function onboardView(){
   const t=S.entryTab||'customer';
   const seg=`<div class="seg">${[['customer','Муштарӣ'],['worker','Коргар'],['admin','Роҳбар']].map(([k,l])=>`<button data-act="etab" data-v="${k}" class="${t===k?'on':''}">${l}</button>`).join('')}</div>`;
   const err=S.loginErr?`<div class="err">${esc(S.loginErr)}</div>`:'';
-  const head=(h,p)=>`<div class="lhead"><div class="logo">AP</div><h1>${h}</h1><p class="muted small" style="margin:0">${p}</p></div>`;
+  const head=(h,p)=>`<div class="lhead">${logoHtml()}<h1>${h}</h1><p class="muted small" style="margin:0">${p}</p></div>`;
   if(t==='worker')return`<div class="login">${head('Воридшавии коргар','Логин ва паролро аз роҳбар гиред.')}${seg}
     <form class="card" id="f-login" autocomplete="on"><label>Логин<input id="l-login" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
     <label>Парол<div class="pw"><input id="l-pass" type="${S.showPw?'text':'password'}" autocomplete="current-password" required><button type="button" class="link" data-act="showpw">${S.showPw?'Пинҳон':'Нишон деҳ'}</button></div></label>
@@ -663,9 +797,9 @@ function quotesHtml(r,v,canAdd){
   const list=qs.length?`<div class="qlist">${qs.map(q=>`<div class="q ${r.chosenQ===q.id?'chosen':''}"><span class="qs">${esc(q.sup)} ${qs.length>1&&+q.cost===min?'<span class="best">арзонтарин</span>':''} ${r.chosenQ===q.id?'<span class="best">интихоб шуд</span>':''}</span><span class="qc">${money(q.cost)}</span>
     <span class="qm"><span>${esc(KIND[q.kind]||'')}</span>${q.eta?`<span>${esc(q.eta)} рӯз</span>`:''}${q.ph?`<span>${esc(q.ph)}</span>`:''}${q.note?`<span>${esc(q.note)}</span>`:''}<span>${esc(uname(q.by))} · ${ago(q.t)}</span></span>
     ${v==='admin'||canAdd?`<span class="qa">${v==='admin'&&r.chosenQ!==q.id?`<button class="btn ok" data-act="chooseq" data-id="${r.id}" data-q="${q.id}" style="height:34px">Интихоб</button>`:''}${q.ph?`<a class="btn" style="height:34px" href="${waLink(q.ph,waText(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}${v==='admin'||(canAdd&&actIds().includes(q.by))?`<button class="link" data-act="delq" data-id="${r.id}" data-q="${q.id}" style="color:var(--bad)">Нест кардан</button>`:''}</span>`:''}</div>`).join('')}</div>`:`<div class="small muted">Ҳоло нарх нест.</div>`;
-  const form=canAdd?`<div class="cform"><div class="grid"><label>Паставшик<input id="q-sup-${r.id}" placeholder="Номи мағоза"></label><label>Нархи харид (${esc(C.cur)})<input id="q-cost-${r.id}" type="number" step="0.01" min="0" inputmode="decimal"></label>
+  const form=!canAdd?'':S.qOpen!==r.id?`<div><button class="btn pri" data-act="qopen" data-id="${r.id}">+ Нарх илова кардан</button></div>`:`<div class="cform"><div class="grid"><label>Паставшик<input id="q-sup-${r.id}" placeholder="Номи мағоза"></label><label>Нархи харид (${esc(C.cur)})<input id="q-cost-${r.id}" type="number" step="0.01" min="0" inputmode="decimal"></label>
     <label>Намуд<select id="q-kind-${r.id}">${Object.entries(KIND).map(([k,l])=>`<option value="${k}" ${(r.condition==='used'?'used':'orig')===k?'selected':''}>${l}</option>`).join('')}</select></label><label>Расонидан (рӯз)<input id="q-eta-${r.id}" type="number" min="0" step="1"></label>
-    <label>Телефони паставшик<input id="q-ph-${r.id}" inputmode="tel"></label><label>Эзоҳ<input id="q-note-${r.id}" placeholder="Сифат, ранг…"></label></div><div><button class="btn pri" data-act="addq" data-id="${r.id}">+ Нарх илова кардан</button></div></div>`:'';
+    <label>Телефони паставшик<input id="q-ph-${r.id}" inputmode="tel"></label><label>Эзоҳ<input id="q-note-${r.id}" placeholder="Сифат, ранг…"></label></div><div class="bar"><button class="btn pri" data-act="addq" data-id="${r.id}">Сабт кардан</button><button class="btn" data-act="qclose">Бекор</button></div></div>`;
   return`<div class="card"><h3>Нархи паставшикҳо · ${qs.length}</h3>${list}${form}</div>`;
 }
 function sheet(){
@@ -709,9 +843,11 @@ function sheet(){
         ${r.status==='delivered'?`<div class="small muted">Дода шуд: ${fmt(r.deliveredAt)}${r.warrantyDays?' · кафолат то '+fdate(r.deliveredAt+r.warrantyDays*864e5):''}</div>`:''}
         <div class="bar"><input id="ret-${r.id}" placeholder="Сабаби бозгашт (қисми нодуруст, вайрон…)" style="flex:1"><button class="btn bad" data-act="return" data-id="${r.id}">Баргашт</button></div></div>`;
     }
-    act+=`<div class="card"><h3>Тағйири дастӣ</h3><div class="bar"><select id="d-status-${r.id}" style="width:auto;flex:1">${ORDER.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${ST[s].l}</option>`).join('')}</select><button class="btn" data-act="setstatus" data-id="${r.id}">Ҳолат</button></div>
+    act+=`<details class="card dt" data-k="man" ${S.det.man?'open':''}><summary><h3>Тағйири дастӣ</h3></summary><div class="bar"><select id="d-status-${r.id}" style="width:auto;flex:1">${ORDER.map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${ST[s].l}</option>`).join('')}</select><button class="btn" data-act="setstatus" data-id="${r.id}">Ҳолат</button></div>
       <div class="bar"><input id="d-cost-${r.id}" type="number" step="0.01" min="0" placeholder="Нархи харид ${esc(C.cur)}" value="${esc(r.cost??'')}" style="flex:1"><button class="btn" data-act="setcost" data-id="${r.id}">Нархи харид</button></div>
-      <div><button class="link" data-act="delreq" data-id="${r.id}" style="color:var(--bad)">${S.confirmDel===r.id?'Барои тасдиқ боз пахш кунед — дархост тамоман нест мешавад':'Дархостро нест кардан'}</button></div></div>`;
+</details>
+      <details class="card dt" data-k="del" ${S.det.del?'open':''}><summary><h3>Нест кардан</h3></summary><div class="small muted">Дархост аз ҳама ҷо нест мешавад — аз панели роҳбар, коргар ва муштарӣ. Инро баргардондан мумкин нест.</div>
+      <div class="bar"><button class="btn bad" data-act="delreq" data-id="${r.id}">${S.confirmDel===r.id?'Ҳа, тамоман нест кун':'Дархостро нест кардан'}</button>${S.confirmDel===r.id?`<button class="btn" data-act="delno">Не</button>`:''}</div></details>`;
     if(r.status!=='offered')act+=msgCard;
   }
   if(v==='worker'){
@@ -723,9 +859,9 @@ function sheet(){
       else act+=`<div class="note">Роҳбар нархро интихоб мекунад ва ба муштарӣ мефиристад.</div>`;
     }else if((r.quotes||[]).length&&isMine)act+=quotesHtml(r,v,false);
   }
-  const wa=`<div class="card"><h3>Матн барои паставшик (WhatsApp)</h3><div class="wa" id="wa-${r.id}">${esc(waText(r))}</div><div class="bar"><button class="btn" data-act="copy" data-id="${r.id}">Нусха гирифтан</button><a class="btn" href="https://wa.me/?text=${encodeURIComponent(waText(r))}" target="_blank" rel="noopener">WhatsApp кушодан</a></div></div>`;
+  const wa=`<details class="card dt" data-k="wa" ${S.det.wa?'open':''}><summary><h3>Матн барои паставшик (WhatsApp)</h3></summary><div class="wa" id="wa-${r.id}">${esc(waText(r))}</div><div class="bar"><button class="btn" data-act="copy" data-id="${r.id}">Нусха гирифтан</button><a class="btn" href="https://wa.me/?text=${encodeURIComponent(waText(r))}" target="_blank" rel="noopener">WhatsApp кушодан</a></div></details>`;
   const logs=r.log.concat(r.plog).sort((a,b)=>b.t-a.t);
-  const log=`<div class="card"><h3>Таърих</h3><ul class="log">${logs.map(l=>`<li><time>${fmt(l.t)}</time><span>${esc(l.s)} <span class="muted">· ${esc(uname(l.by))}</span></span></li>`).join('')}</ul></div>`;
+  const log=`<details class="card dt" data-k="log" ${S.det.log?'open':''}><summary><h3>Таърих</h3></summary><ul class="log">${logs.map(l=>`<li><time>${fmt(l.t)}</time><span>${esc(l.s)} <span class="muted">· ${esc(uname(l.by))}</span></span></li>`).join('')}</ul></details>`;
   return`<div class="sheet-bg" data-act="close"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="sheet-h"><span class="tag">${esc(r.code)}</span>${pill(r.status)}<span class="urg ${r.urgency||'d3'}">${URG[r.urgency||'d3'].l}</span><button class="x" data-act="close" aria-label="Пӯшидан">×</button><div class="ttl">${esc(itemsTxt(r))}</div></div>
     <div class="card">${info}</div><div class="card"><h3>Қисмҳо</h3>${itemsBox}${mg}</div><div class="card"><h3>Аксҳо</h3>${photos}</div>${act}${wa}${log}</div></div>`;
 }
@@ -824,7 +960,7 @@ document.addEventListener('submit',async e=>{
   if(fid==='f-set'){
     const g=k=>val('s-'+k);const d={name:g('name')||CFG_DEFAULT.name,tagline:g('tagline'),phone:g('phone'),industry:g('industry')||'general',
       f1:g('f1'),f1s:g('f1s')||g('f1'),f1ph:g('f1ph'),f2:g('f2'),f2ph:g('f2ph'),f3:g('f3'),f3ph:g('f3ph'),f3len:Math.max(0,parseInt(g('f3len'))||0),itemPh:g('itemPh'),refHint:g('refHint'),
-      needRef:!!document.getElementById('s-needRef')?.checked,g1:g('g1')||'Нав',g2:g('g2')||'Кӯҳна',cur:(g('cur')||'AED').toUpperCase(),cur2:g('cur2').toUpperCase(),rate2:parseFloat(g('rate2'))||0,updatedAt:Date.now()};
+      needRef:!!document.getElementById('s-needRef')?.checked,g1:g('g1')||'Нав',g2:g('g2')||'Кӯҳна',cur:(g('cur')||'AED').toUpperCase(),cur2:g('cur2').toUpperCase(),rate2:parseFloat(g('rate2'))||0,logo:C.logo||'',updatedAt:Date.now()};
     S.busy=true;render();
     try{await setDoc(doc(db,'settings','app'),d);S.busy=false;toast('Танзимот сабт шуд')}catch(err){S.busy=false;toast('Сабт нашуд: '+errTxt(err))}
     return;
@@ -868,6 +1004,7 @@ document.addEventListener('change',async e=>{
   if(t.id==='n-photo'){const n=document.getElementById('n-photo-n');if(n)n.textContent=t.files.length?t.files.length+' акс интихоб шуд':'';return}
   if(t.dataset.up){const id=t.dataset.up,r=S.reqs.find(x=>x.id===id);if(!r||!t.files.length)return;toast('Акс бор шуда истодааст…');
     const add=await uploadFiles(t.files,view()==='customer'?'c':'w',id,r.customerId||null);if(add.length)await upd(id,{photos:(r.photos||[]).concat(add)},add.length+' акс илова шуд');return}
+  if(t.id==='s-logo'){const fl=t.files&&t.files[0];if(!fl)return;try{const d=await logoData(fl);await setDoc(doc(db,'settings','app'),{logo:d},{merge:true});toast('Логотип сабт шуд')}catch(err){toast('Логотип сабт нашуд: '+errTxt(err))}return}
   if(a==='industry'){const p=PRESETS[t.value];if(p)for(const k of['f1','f1s','f1ph','f2','f2ph','f3','f3ph','f3len','itemPh','refHint','g1','g2']){const x=document.getElementById('s-'+k);if(x)x.value=p[k]??''}const nr=document.getElementById('s-needRef');if(nr&&p)nr.checked=!!p.needRef;return}
   if(a==='fgsel'){S.fGroup=t.value;render();return}
   if(a==='awsel'){S.asWorker=t.value;S.open=null;render();return}
@@ -882,12 +1019,14 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.act,id=b.dataset.id,r=id&&S.reqs.find(x=>x.id===id);
   switch(a){
     case'view':S.view=b.dataset.v;S.open=null;S.newReq=false;break;
-    case'atab':S.adminTab=b.dataset.v;break;
+    case'atab':S.adminTab=b.dataset.v;render();scrollTo(0,0);return;
     case'rtab':S.repTab=b.dataset.v;break;
     case'fs':S.fStatus=b.dataset.v;break;
     case'wt':S.wTab=b.dataset.v;break;
     case'open':S.open=id;S.confirmDel=null;break;
-    case'close':S.open=null;break;
+    case'close':S.open=null;S.qOpen=null;break;
+    case'qopen':S.qOpen=id;render();setTimeout(()=>{const x=document.getElementById('q-sup-'+id);if(x)x.focus()},20);return;
+    case'qclose':S.qOpen=null;break;
     case'lb':S.lb=b.dataset.v;break;
     case'lbclose':S.lb=null;break;
     case'additem':S.nItems=Math.min(12,S.nItems+1);render();setTimeout(()=>{const x=document.getElementById('n-it-'+(S.nItems-1));if(x)x.focus()},20);return;
@@ -919,7 +1058,7 @@ document.addEventListener('click',async e=>{
         setDoc(doc(db,'priv',id),{workerId:w},{merge:true}).catch(()=>{});return}
     case'addq':{const sup=val('q-sup-'+id),cost=fnum('q-cost-'+id);if(!sup||!(cost>0)){toast('Номи паставшик ва нархро нависед');return}
       const q={id:'q'+Date.now().toString(36),sup,cost,kind:val('q-kind-'+id)||'orig',eta:val('q-eta-'+id),ph:val('q-ph-'+id),note:val('q-note-'+id),by:actor(),t:Date.now()};
-      if(await upd(id,{quotes:(r.quotes||[]).concat([q])},'Нарх: '+sup+' · '+money(cost)))['q-sup-','q-cost-','q-eta-','q-ph-','q-note-'].forEach(p=>{const x=document.getElementById(p+id);if(x)x.value=''});return}
+      if(await upd(id,{quotes:(r.quotes||[]).concat([q])},'Нарх: '+sup+' · '+money(cost))&&!(S.qOpen=null))['q-sup-','q-cost-','q-eta-','q-ph-','q-note-'].forEach(p=>{const x=document.getElementById(p+id);if(x)x.value=''});return}
     case'delq':{const qid=b.dataset.q;const patch={quotes:(r.quotes||[]).filter(q=>q.id!==qid)};if(r.chosenQ===qid)patch.chosenQ=null;await upd(id,patch,'Нарх нест карда шуд');return}
     case'chooseq':{const q=(r.quotes||[]).find(x=>x.id===b.dataset.q);if(!q)return;await upd(id,{chosenQ:q.id,cost:q.cost,supplier:q.sup,supplierPhone:q.ph||''},'Интихоб: '+q.sup+' · '+money(q.cost));return}
     case'found':{if(!(r.quotes||[]).length){toast('Камаш як нарх илова кунед');return}const best=r.quotes.slice().sort((x,y)=>x.cost-y.cost)[0];
@@ -943,8 +1082,10 @@ document.addEventListener('click',async e=>{
     case'return':{const why=val('ret-'+id);if(!why){toast('Сабаби бозгаштро нависед');return}await upd(id,{status:'returned',returnReason:why,returnedAt:Date.now()},'Баргашт: '+why);return}
     case'setstatus':{const s=val('d-status-'+id);if(s===r.status)return;await upd(id,{status:s},'Ҳолат: '+ST[s].l);return}
     case'setcost':{const c=fnum('d-cost-'+id);await upd(id,{cost:c},'Нархи харид: '+money(c));return}
+    case'logodel':try{await setDoc(doc(db,'settings','app'),{logo:''},{merge:true});toast('Логотип нест шуд')}catch(err){toast('Нашуд: '+errTxt(err))}return;
+    case'delno':S.confirmDel=null;break;
     case'delreq':{if(S.confirmDel!==id){S.confirmDel=id;break}
-      try{await deleteDoc(doc(db,'requests',id));await deleteDoc(doc(db,'priv',id)).catch(()=>{});for(const p of (r.photos||[]))deleteDoc(doc(db,'photos',p.id)).catch(()=>{});S.open=null;S.confirmDel=null;toast('Дархост нест карда шуд')}catch(err){toast('Нест нашуд: '+errTxt(err))}return}
+      try{await deleteDoc(doc(db,'requests',id));await deleteDoc(doc(db,'priv',id)).catch(()=>{});for(const p of (r.photos||[]))deleteDoc(doc(db,'photos',p.id)).catch(()=>{});S.open=null;S.confirmDel=null;toast('Дархост №'+r.code+' нест карда шуд')}catch(err){toast('Нест нашуд: '+errTxt(err))}return}
     case'cust-accept':await upd(id,{status:'ordered',orderedAt:Date.now()},'Муштарӣ заказ дод');return;
     case'cust-decline':await upd(id,{status:'cancelled'},'Муштарӣ рад кард');return;
     case'cust-cancel':await upd(id,{status:'cancelled'},'Муштарӣ бекор кард');return;
