@@ -446,6 +446,18 @@ h3{font-size:10.5px}
 .bulk{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .bulk textarea{font-family:var(--mono);font-size:15px;min-height:130px;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--ink)}
 code.pc{font:600 12px var(--mono);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:0 5px;color:var(--ink);white-space:nowrap}
+
+.seg.mode{display:flex;width:100%}
+.seg.mode button{flex:1;height:44px;font-size:15px}
+.codes-ta{font-family:var(--mono);font-size:16px;min-height:170px;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);color:var(--ink);line-height:1.5}
+.codes-list{display:flex;flex-direction:column;gap:6px}
+.cl-h{font-size:13.5px;font-weight:600}
+.cl-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.cl-c{min-width:0;overflow-wrap:anywhere;font-weight:400}
+.cl-c code.pc{font-size:14px}
+.stepper{display:flex;align-items:center;gap:4px;flex:none}
+.stepper button{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;font-weight:700;cursor:pointer}
+.simple-f .stepper input{width:48px;min-height:36px;height:36px;text-align:center;padding:0;font-size:15px}
 </style>
 </head>
 <body>
@@ -846,13 +858,35 @@ function customerView(){
 }
 
 function itemRow(i){return`<div class="irow3"><input id="n-it-${i}" placeholder="${i?'Номи қисм':esc(C.itemPh)}" aria-label="Номи қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"><input id="n-ic-${i}" class="codein" placeholder="Коди қисм (агар бошад)" autocapitalize="characters" spellcheck="false" aria-label="Коди қисм ${i+1}"></div>`}
-function bulkBox(){return S.bulk?`<div class="bulk"><div class="small muted" style="font-weight:600">Ҳар код дар як сатр. Пас аз код номро ҳам навиштан мумкин.</div><textarea id="n-codes" rows="6" placeholder="04465-33450\n90915-YZZD4 филтри равған\n…"></textarea></div>`:''}
+function parseCodes(txt){const map=new Map(),notes=[];
+  String(txt||'').split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).slice(0,120).forEach(line=>{
+    const tk=line.split(/[\s,]+/).filter(Boolean);const code=(tk[0]||'').toUpperCase().replace(/[.,:]+$/,'');
+    if(!/\d/.test(code)||code.length<4){notes.push(line);return}
+    let rest=tk.slice(1),q=1;const last=rest[rest.length-1];
+    const m=last&&last.match(/^[x×*]?(\d{1,3})(шт|pcs|дона|ta)?\.?$/i);if(m){q=Math.max(1,+m[1]);rest=rest.slice(0,-1)}
+    else if(rest.length>=2&&/^[x×*]$/i.test(rest[rest.length-2])&&/^\d{1,3}$/.test(last)){q=+last;rest=rest.slice(0,-2)}
+    const n=rest.join(' ').replace(/^[-–:]+\s*/,'').trim();
+    if(map.has(code)){const o=map.get(code);o.q+=q;if(!o.n&&n)o.n=n}else map.set(code,{code,n,q})});
+  return{items:[...map.values()].slice(0,60),notes}}
+function codesList(){const el=document.getElementById('n-codes'),box=document.getElementById('codes-list');if(!el||!box)return;
+  const {items,notes}=parseCodes(el.value);S.cq=S.cq||{};
+  box.innerHTML=items.length?`<div class="cl-h">Ёфт шуд: <b>${items.length}</b> код${notes.length?` · <span class="muted">${notes.length} сатр ҳамчун эзоҳ</span>`:''}</div>${items.map(it=>{const q=S.cq[it.code]||it.q;return`<div class="cl-r"><span class="cl-c"><code class="pc">${esc(it.code)}</code>${it.n?` <span class="small">${esc(it.n)}</span>`:''}</span><span class="stepper"><button type="button" data-cq="-1" data-code="${esc(it.code)}" aria-label="Кам">−</button><input class="cqin" data-code="${esc(it.code)}" type="number" min="1" value="${q}" aria-label="Миқдор"><button type="button" data-cq="1" data-code="${esc(it.code)}" aria-label="Зиёд">+</button></span></div>`}).join('')}`:'<div class="small muted">Кодҳо дар ин ҷо бо миқдорашон пайдо мешаванд.</div>'}
+function bulkBox(){return S.bulk?`<div class="bulk"><div class="small muted" style="font-weight:600">Ҳар код дар як сатр. Пас аз код ном ё миқдорро ҳам навиштан мумкин (масалан: 21810-A9000 2).</div><textarea id="n-codes" rows="6" placeholder="21810-A9000\n90915-YZZD4 филтри равған\n25281-2F001 2"></textarea><div id="codes-list" class="codes-list"></div></div>`:''}
 function custReqForm(){
   const rows=[];for(let i=0;i<S.nItems;i++)rows.push(itemRow(i));
   const opt='<span class="opt">ихтиёрӣ</span>';
-  return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>
+  const md=S.fMode==='codes'?'codes':'simple';
+  const sw=`<div class="seg mode"><button type="button" data-act="fmode" data-v="simple" class="${md==='simple'?'on':''}">Ном ва акс</button><button type="button" data-act="fmode" data-v="codes" class="${md==='codes'?'on':''}">Танҳо кодҳо</button></div>`;
+  const back=S.reqs.some(r=>r.customerId===cid())?'<button class="btn block" type="button" data-act="closenew">Бекор</button>':'';
+  if(md==='codes')return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>${sw}
+    <div class="big"><div class="lbl">1. Кодҳоро гузоред</div><div class="small muted">Ҳар код дар як сатр. Аз WhatsApp ё Excel нусха гирифта гузоред. Сатрҳои бе код ҳамчун эзоҳ мераванд.</div>
+      <textarea id="n-codes" class="codes-ta" rows="7" placeholder="21810-A9000\n21950-A9000\n25281-2F001 2"></textarea></div>
+    <div class="big"><div class="lbl">2. Миқдор</div><div id="codes-list" class="codes-list"></div></div>
+    <label class="big"><span>3. Мошин ${opt}</span><input id="n-car" placeholder="${esc(C.f1ph)}" autocomplete="off"></label>
+    <button class="btn pri block" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button>${back}</form>`;
+  return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>${sw}
     <label class="big">1. Мошинатон<input id="n-car" required placeholder="${esc(C.f1ph)} 2015" autocomplete="off"></label>
-    <div class="big"><div class="lbl">2. Чӣ лозим?</div><div class="items">${rows.join('')}</div><div class="bar" style="margin-top:6px"><button type="button" class="link" data-act="additem">+ Боз як қисм</button><button type="button" class="link" data-act="bulk">${S.bulk?'− Рӯйхати кодҳоро пӯшидан':'☰ Кодҳои бисёр якбора'}</button></div>${bulkBox()}</div>
+    <div class="big"><div class="lbl">2. Чӣ лозим?</div><div class="items">${rows.join('')}</div><button type="button" class="link" data-act="additem" style="margin-top:6px">+ Боз як қисм</button></div>
     <div class="big"><div class="lbl">3. Акс ${opt}</div><label class="upl wide">${ICON_CAM}Акси қисм ё техпаспорт<input type="file" id="n-photo" accept="image/*" multiple></label> <span class="small muted" id="n-photo-n"></span></div>
     <details class="more" id="n-more"><summary>Маълумоти иловагӣ ${opt}</summary><div class="grid">
       <label class="full">${esc(C.f3)}<input id="n-vin" autocapitalize="characters" spellcheck="false" placeholder="${esc(C.f3ph)}" style="font-family:var(--mono)"></label>
@@ -863,7 +897,7 @@ function custReqForm(){
     </div></details>
     <button class="btn pri block" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button>
     <div class="small muted" style="text-align:center">Агар коди қисм, акс ё VIN бошад, қисмро зудтар меёбем.</div>
-    ${S.reqs.some(r=>r.customerId===cid())?'<button class="btn block" type="button" data-act="closenew">Бекор</button>':''}</form>`;
+    ${back}</form>`;
 }
 function newReqForm(forAdmin){
   if(!forAdmin)return custReqForm();
@@ -1002,6 +1036,7 @@ function render(){
   if(files&&files.length){const e=document.getElementById('n-photo');if(e){try{e.files=files}catch(_){}const n=document.getElementById('n-photo-n');if(n)n.textContent=files.length+' акс интихоб шуд'}}
   const sh=app.querySelector('.sheet');if(sh)sh.scrollTop=sc;
   opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true});
+  codesList();
   if(S.open)calcPP(S.open);
   fillPhotos();
   if(f){const e=document.getElementById(f);if(e){e.focus();if(e.id==='q'){const n=e.value.length;try{e.setSelectionRange(n,n)}catch(_){}}}}
@@ -1032,6 +1067,8 @@ function calcPP(id){
   if(pp){if(any&&r.cost){const p=sum-r.cost;pp.textContent=money(Math.round(p*100)/100)+(sum?' · '+Math.round(p/sum*100)+'%':'');pp.style.color=p<0?'var(--bad)':''}else pp.textContent='—'}
 }
 
+document.addEventListener('input',e=>{if(e.target.id==='n-codes'){codesList();return}if(e.target.classList&&e.target.classList.contains('cqin')){S.cq=S.cq||{};S.cq[e.target.dataset.code]=Math.max(1,parseInt(e.target.value)||1);return}});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-cq]');if(!b)return;e.preventDefault();const inp=b.parentNode.querySelector('.cqin');const v=Math.max(1,(parseInt(inp.value)||1)+(+b.dataset.cq));inp.value=v;S.cq=S.cq||{};S.cq[b.dataset.code]=v},true);
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;render()}else if(e.target.dataset&&e.target.dataset.pp)calcPP(e.target.dataset.pp)});
 document.addEventListener('submit',async e=>{
   e.preventDefault();const fid=e.target.id;
@@ -1096,11 +1133,13 @@ document.addEventListener('submit',async e=>{
   }
   if(fid==='f-new'){
     const forAdmin=view()==='admin';
-    const car=val('n-car');if(!car)return;
+    const codesMode=!forAdmin&&S.fMode==='codes';
+    const car=val('n-car')||(codesMode?'—':'');if(!car)return;
     const items=[];for(let i=0;i<S.nItems;i++){const n=val('n-it-'+i),code=val('n-ic-'+i).toUpperCase().replace(/\s+/g,' ').trim();if(n||code){const it={n:n||code,q:Math.max(1,parseInt(val('n-iq-'+i))||1),price:null,off:false};if(code)it.code=code;items.push(it)}}
     const bt=document.getElementById('n-codes');
-    if(bt&&bt.value.trim())bt.value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).slice(0,60).forEach(line=>{const m=line.match(/^(\S+)\s*(.*)$/);const code=m[1].toUpperCase().replace(/,+$/,'');const n=(m[2]||'').trim();items.push({n:n||code,code,q:1,price:null,off:false})});
-    if(!items.length){toast('Номи қисм ё кодашро нависед');return}
+    let extraNote='';
+    if(bt&&bt.value.trim()){const pc=parseCodes(bt.value);pc.items.forEach(it=>items.push({n:it.n||it.code,code:it.code,q:Math.max(1,parseInt((S.cq||{})[it.code])||it.q),price:null,off:false}));extraNote=pc.notes.join(' · ')}
+    if(!items.length){toast(codesMode?'Камаш як кодро гузоред':'Номи қисм ё кодашро нависед');return}
     const vin=val('n-vin').toUpperCase().replace(/\s/g,'');
     const fileEl=document.getElementById('n-photo');const files=fileEl?fileEl.files:null;
         const cond=(document.querySelector('input[name="n-cond"]:checked')||{}).value||'any';
@@ -1111,7 +1150,7 @@ document.addEventListener('submit',async e=>{
     if(forAdmin){cname=val('n-cname');const dg=digits(val('n-cphone'));cphone=dg?'+'+dg:'';
       if(dg.length>=7){custId='c-'+dg;if(!S.customers[custId]){try{await setDoc(doc(db,'customers',custId),{name:cname,phone:cphone,createdAt:now})}catch(_){}}}}
     const photos=await uploadFiles(files,forAdmin?'w':'c',ref.id,custId);
-    const d={code:String(now).slice(-6),car,year:val('n-year'),items,parts:items.map(i=>inm(i)).join(', '),vin,condition:cond,urgency:urg,note:val('n-note'),photos,
+    const d={code:String(now).slice(-6),car,year:val('n-year'),items,parts:items.map(i=>inm(i)).join(', '),vin,condition:cond,urgency:urg,note:[val('n-note'),extraNote].filter(Boolean).join(' · '),photos,
       status:'new',group:cond==='any'?null:cond,workerId:null,customerId:custId,customerName:cname,customerPhone:cphone,createdAt:now,updatedAt:now,log:[{t:now,by:actor(),s:'Дархост сохта шуд'}]};
     let priv=null;
     if(forAdmin){const man=document.getElementById('n-man');
@@ -1121,7 +1160,7 @@ document.addEventListener('submit',async e=>{
         d.items=items.map((it,i)=>({...it,price:i===0?price:0}));d.status='ordered';d.orderedAt=now;d.offeredAt=now;d.manual=true;d.log.push({t:now,by:actor(),s:'Заказ бе ҷустуҷӯ: '+money(price)});
         priv={quotes:sup||cost?[{id:qid,sup:sup||'—',cost:cost||0,kind:cond==='used'?'used':'orig',by:actor(),t:now}]:[],chosenQ:sup||cost?qid:null,cost:cost||null,supplier:sup,workerId:null,log:[]}}}
     try{await setDoc(ref,d);if(priv)await setDoc(doc(db,'priv',ref.id),priv);
-      S.newReq=false;S.nItems=1;S.bulk=false;
+      S.newReq=false;S.nItems=1;S.bulk=false;S.cq={};
       app.querySelectorAll('#f-new input:not([type=radio]):not([type=checkbox]),#f-new textarea').forEach(x=>{if(x.type==='file'){x.value='';return}x.value=x.type==='number'&&x.id.startsWith('n-iq')?'1':''});
       S.busy=false;if(!forAdmin)S.cTab='list';toast('Дархост фиристода шуд')}
     catch(err){S.busy=false;toast('Фиристода нашуд: '+errTxt(err))}
@@ -1160,6 +1199,7 @@ document.addEventListener('click',async e=>{
     case'qclose':S.qOpen=null;break;
     case'lb':S.lb=b.dataset.v;break;
     case'lbclose':S.lb=null;break;
+    case'fmode':S.fMode=b.dataset.v;render();return;
     case'bulk':S.bulk=!S.bulk;render();setTimeout(()=>{const x=document.getElementById('n-codes');if(x)x.focus()},20);return;
     case'additem':S.nItems=Math.min(12,S.nItems+1);render();setTimeout(()=>{const x=document.getElementById('n-it-'+(S.nItems-1));if(x)x.focus()},20);return;
     case'newreq':S.newReq=true;render();setTimeout(()=>{const f=document.getElementById('f-new');if(f){f.scrollIntoView({behavior:'smooth',block:'start'});const i=document.getElementById(view()==='admin'?'n-cname':'n-car');if(i)i.focus({preventScroll:true})}},30);return;
