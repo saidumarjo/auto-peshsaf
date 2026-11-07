@@ -426,6 +426,20 @@ h3{font-size:10.5px}
 .iconbtn.gear+.iconbtn{margin-left:0}
 .iconbtn.on{color:var(--primary);border-color:var(--primary);background:var(--primary-soft)}
 .bnav.c4{grid-template-columns:repeat(4,1fr)}
+
+.simple-f{display:flex;flex-direction:column;gap:16px}
+.simple-f .big,.simple-f label.big{display:flex;flex-direction:column;gap:7px;font-size:16px;font-weight:700;color:var(--ink)}
+.simple-f .lbl{font-size:16px;font-weight:700}
+.simple-f input{font-size:16px;min-height:48px}
+.simple-f .opt{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface2);border-radius:999px;padding:1px 8px;margin-left:4px;vertical-align:middle}
+.upl.wide{width:100%;justify-content:center;height:52px;font-size:15px}
+.simple-f details.more{border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.simple-f details.more>summary{cursor:pointer;font-weight:700;color:var(--primary);list-style:none}
+.simple-f details.more>summary::-webkit-details-marker{display:none}
+.simple-f details.more>summary::before{content:"+ "}
+.simple-f details.more[open]>summary::before{content:"− "}
+.simple-f details.more[open]>summary{margin-bottom:12px}
+.btn.block{width:100%;height:52px;font-size:16px;justify-content:center}
 </style>
 </head>
 <body>
@@ -823,7 +837,26 @@ function customerView(){
   return hero+nav+body;
 }
 
+function custReqForm(){
+  const rows=[];for(let i=0;i<S.nItems;i++)rows.push(`<div class="irow"><input id="n-it-${i}" placeholder="${i?'Боз чӣ лозим?':esc(C.itemPh)}" ${i===0?'required':''} aria-label="Қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"></div>`);
+  const opt='<span class="opt">ихтиёрӣ</span>';
+  return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>
+    <label class="big">1. Мошинатон<input id="n-car" required placeholder="${esc(C.f1ph)} 2015" autocomplete="off"></label>
+    <div class="big"><div class="lbl">2. Чӣ лозим?</div><div class="items">${rows.join('')}</div><button type="button" class="link" data-act="additem" style="margin-top:6px">+ Боз як қисм</button></div>
+    <div class="big"><div class="lbl">3. Акс ${opt}</div><label class="upl wide">${ICON_CAM}Акси қисм ё техпаспорт<input type="file" id="n-photo" accept="image/*" multiple></label> <span class="small muted" id="n-photo-n"></span></div>
+    <details class="more"><summary>Маълумоти иловагӣ ${opt}</summary><div class="grid">
+      <label class="full">${esc(C.f3)}<input id="n-vin" autocapitalize="characters" spellcheck="false" placeholder="${esc(C.f3ph)}" style="font-family:var(--mono)"></label>
+      <label class="full">${esc(C.f2)}<input id="n-year" inputmode="numeric" placeholder="${esc(C.f2ph)}"></label>
+      <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Нав ё кӯҳна?</div><div class="radio">${Object.entries(COND).map(([k,l])=>`<label><input type="radio" name="n-cond" id="n-cond-${k}" value="${k}" ${k==='any'?'checked':''}>${l}</label>`).join('')}</div></div>
+      <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Кай лозим?</div><div class="radio">${Object.entries(URG).map(([k,u])=>`<label><input type="radio" name="n-urg" id="n-urg-${k}" value="${k}" ${k==='d3'?'checked':''}>${u.l}</label>`).join('')}</div></div>
+      <label class="full">Эзоҳ<input id="n-note" placeholder="Ранг, тараф (чап/рост)…"></label>
+    </div></details>
+    <button class="btn pri block" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button>
+    <div class="small muted" style="text-align:center">Агар акс ё VIN бошад, қисмро зудтар меёбем.</div>
+    ${S.reqs.some(r=>r.customerId===cid())?'<button class="btn block" type="button" data-act="closenew">Бекор</button>':''}</form>`;
+}
 function newReqForm(forAdmin){
+  if(!forAdmin)return custReqForm();
   const rows=[];for(let i=0;i<S.nItems;i++)rows.push(`<div class="irow"><input id="n-it-${i}" placeholder="${i?'Боз як мол/қисм':esc(C.itemPh)}" ${i===0?'required':''} aria-label="Қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"></div>`);
   return`<form class="card" id="f-new"><h2>${forAdmin?'Дархост аз номи муштарӣ':'Дархости нав'}</h2><div class="grid">
     ${forAdmin?`<label>Номи муштарӣ<input id="n-cname" required></label><label>WhatsApp-и муштарӣ<input id="n-cphone" inputmode="tel" placeholder="+971…"></label>`:''}
@@ -1056,9 +1089,7 @@ document.addEventListener('submit',async e=>{
     if(!items.length){toast('Камаш як қисмро нависед');return}
     const vin=val('n-vin').toUpperCase().replace(/\s/g,'');
     const fileEl=document.getElementById('n-photo');const files=fileEl?fileEl.files:null;
-    if(C.needRef&&!vin&&!(files&&files.length)&&!forAdmin){toast(C.f3+' ё аксро илова кунед');return}
-    if(C.f3len&&vin&&vin.length!==C.f3len&&!forAdmin){toast(C.f3+' бояд '+C.f3len+' рамз бошад. Санҷед.');return}
-    const cond=(document.querySelector('input[name="n-cond"]:checked')||{}).value||'any';
+        const cond=(document.querySelector('input[name="n-cond"]:checked')||{}).value||'any';
     const urg=(document.querySelector('input[name="n-urg"]:checked')||{}).value||'d3';
     S.busy=true;render();
     const ref=doc(collection(db,'requests'));const now=Date.now();
