@@ -699,6 +699,17 @@ button.wc{cursor:pointer}
 .ast>summary em{font-style:normal;font-size:10.5px;font-weight:800;color:var(--brass);letter-spacing:.06em;text-transform:uppercase}
 .ast-b{padding:0 10px 10px;display:flex;flex-direction:column;gap:10px}
 .ast-b>.card{margin:0;box-shadow:none}
+
+details.rpanel{padding:0;gap:0}
+details.rpanel>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:10px}
+details.rpanel>summary::-webkit-details-marker{display:none}
+.rp-ht{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rp-ht h3{margin:0}
+.rp-ht small{font-size:12.5px;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-tg{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--primary);border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--surface2)}
+.rp-tg::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+details.rpanel[open] .rp-tg::after{transform:rotate(-135deg) translateY(-1px)}
+.rp-body{display:flex;flex-direction:column;gap:10px;padding:0 16px 16px}
 </style>
 </head>
 <body>
@@ -1013,11 +1024,14 @@ function adminView(){
   const w=workers(),none=S.reqs.filter(r=>ACTIVE.includes(r.status)&&!r.workerId).length;
   const wOpts=[['all','Ҳамаи коргарон'],...w.map(([id,u])=>[id,u.name+' · '+loadOf(id)+' дар кор']),['none','Бе масъул'+(none?' · '+none:'')]];
   const chips=items.filter(([k,,n])=>n>0||k===S.fStatus||k==='active'||k==='all');
-  const panel=`<div class="card rpanel"><div class="rp-h"><h3>Дархостҳо</h3><span class="small muted">${list.length} нишон дода шуд</span></div>
+  const curChip=(items.find(x=>x[0]===S.fStatus)||[,'Ҳама'])[1];
+  const fsum=[curChip,S.fWorker!=='all'?(S.fWorker==='none'?'Бе масъул':uname(S.fWorker)):'',S.fGroup!=='all'?(GOPTS().find(x=>x[0]===S.fGroup)||[,''])[1]:'',S.q?'«'+S.q+'»':''].filter(Boolean).join(' · ');
+  const rpOpen=S.rpOpen??false;
+  const panel=`<details class="card rpanel" id="rp" ${rpOpen||S.q?'open':''}><summary class="rp-h"><span class="rp-ht"><h3>Дархостҳо · ${list.length}</h3><small>${esc(fsum)}</small></span><span class="rp-tg">Филтр</span></summary><div class="rp-body">
     ${searchBox('Ҷустуҷӯ: рақам, код, мошин, муштарӣ')}
     <div class="rp-f">${pickBtn('Масъул',S.fWorker==='all'?'Ҳамаи коргарон':S.fWorker==='none'?'Бе масъул':uname(S.fWorker),'worker',S.fWorker!=='all')}${pickBtn('Гурӯҳ',GOPTS().find(x=>x[0]===S.fGroup)?.[1]||'Ҳама гурӯҳҳо','group',S.fGroup!=='all')}</div>
     <div class="rp-chips">${chips.map(([k,l,n,kk])=>`<button class="st ${S.fStatus===k?'on':''} ${kk||''}" data-act="fs" data-v="${k}"><i></i>${esc(l)}<b>${n}</b></button>`).join('')}</div>
-    ${w.length?'':'<div class="note">Коргар нест. Дар қисми <b>Одамон</b> коргаронро бо логин ва парол илова кунед.</div>'}</div>`;
+    ${w.length?'':'<div class="note">Коргар нест. Дар қисми <b>Одамон</b> коргаронро бо логин ва парол илова кунед.</div>'}</div></details>`;
   return tabs+kpis()+alert+wsel+(S.newReq?newReqForm(true):'')+panel+`<div id="list-anchor"></div>`+cards(list,true)+`<button class="fab" data-act="newreq" aria-label="Дархости нав">+</button>`;
 }
 const GOPTS=()=>[['all','Ҳама гурӯҳҳо'],['new',C.g1||'Нав'],['used',C.g2||'Кӯҳна'],['none','Бе гурӯҳ']];
