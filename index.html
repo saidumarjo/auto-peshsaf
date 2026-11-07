@@ -834,6 +834,9 @@ function workerView(){
   const head=isAdm?(ws.length?`<div class="note">Панели кадом коргарро бинед? Ҳар коргар танҳо дархостҳои худашро мебинад.</div><div class="tool"><select data-act="awsel" id="aw" class="chip" style="width:auto;flex:1">${ws.map(([id,u])=>`<option value="${id}" ${aw===id?'selected':''}>${esc(u.name)} · ${esc(GRPS[u.group]||'')}</option>`).join('')}</select>${searchBox('Ҷустуҷӯ')}</div>`:`<div class="note">Аввал дар қисми «Одамон» коргар илова кунед.</div>`)
     :`<div class="note">Гурӯҳи шумо: <b>${esc(GRPS[g0]||'—')}</b>. Барои ҳар дархост нархи якчанд паставшикро нависед — роҳбар беҳтаринашро интихоб мекунад.</div><div class="tool">${searchBox('Ҷустуҷӯ')}</div>`;
   if(!S.wTabSet&&tabs.ord.length&&S.wTab==='new')S.wTab='ord';
+  if(S.lastMoved&&Date.now()-S.lastMoved.t>15000)S.lastMoved=null;
+  if(S.lastMoved){const lm=S.lastMoved;const k=['ord','work','done','new'].find(k=>tabs[k].some(r=>r.id===lm.id&&r.status===lm.st));if(k){S.wTab=k;S.wTabSet=false;S.lastMoved=null}}
+  else if(!tabs[S.wTab].length&&!S.wTabSet){const k=['ord','new','work','done'].find(k=>tabs[k].length);if(k)S.wTab=k}
   return head+(late?`<button class="alert" data-act="wt" data-v="work">${late} дархост мӯҳлаташ гузашт<span class="arr">→</span></button>`:'')+pipe(Object.keys(labels).map(k=>[k,labels[k][0],tabs[k].length,labels[k][1]]),S.wTab,'wt')+cards(tabs[S.wTab]||[],S.wTab==='all');
 }
 
@@ -1050,6 +1053,7 @@ function render(){
   const sh=app.querySelector('.sheet');if(sh)sh.scrollTop=sc;
   opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true});
   codesList();
+  app.querySelectorAll('.pipe-wrap').forEach(w=>{const on=w.querySelector('.st.on');if(on)w.scrollLeft+=on.getBoundingClientRect().left-w.getBoundingClientRect().left-4});
   if(S.open)calcPP(S.open);
   fillPhotos();
   if(f){const e=document.getElementById(f);if(e){e.focus();if(e.id==='q'){const n=e.value.length;try{e.setSelectionRange(n,n)}catch(_){}}}}
@@ -1059,6 +1063,7 @@ function render(){
 const qd={};
 function queued(id,fn){qd[id]=(qd[id]||Promise.resolve()).then(fn,fn);return qd[id]}
 async function upd(id,patch,txt,silent){
+  if(patch&&patch.status&&view()==='worker')S.lastMoved={id,st:patch.status,t:Date.now()};
   const r=S.reqs.find(x=>x.id===id);if(!r)return false;
   const pub={},priv={};for(const k in patch)(PRIV_KEYS.includes(k)?priv:pub)[k]=patch[k];
   const entry={t:Date.now(),by:actor(),s:txt};
