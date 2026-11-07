@@ -99,8 +99,13 @@ service cloud.firestore {
     match /priv/{r} {
       function reqDoc() { return get(/databases/$(database)/documents/requests/$(r)).data; }
       allow read: if isAdmin() || (isWorker() && (resource.data.workerId == wid() || resource.data.orderWorkerId == wid()));
-      allow create, update: if isAdmin()
-        || (isWorker() && reqDoc().workerId == wid() && request.resource.data.workerId == wid());
+      // коргар музди худро тағйир дода наметавонад
+      allow create: if isAdmin()
+        || (isWorker() && reqDoc().workerId == wid() && request.resource.data.workerId == wid()
+            && !request.resource.data.keys().hasAny(['com', 'comPct', 'comW', 'comPaid', 'comPaidAt']));
+      allow update: if isAdmin()
+        || (isWorker() && reqDoc().workerId == wid() && request.resource.data.workerId == wid()
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['com', 'comPct', 'comW', 'comPaid', 'comPaidAt']));
       allow delete: if isAdmin();
     }
 
