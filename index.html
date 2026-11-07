@@ -524,6 +524,16 @@ code.pc{font:600 12px var(--mono);background:var(--surface2);border:1px solid va
 .itbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--primary);font-size:15px;cursor:pointer;flex:none}
 .it-ed{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--primary);border-radius:12px;background:var(--surface2)}
 s.oldc{font:12px var(--mono);color:var(--muted)}
+
+.qitems{display:flex;flex-direction:column;gap:6px}
+.qi{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--surface)}
+.qi-top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.qi-top .nm{min-width:0;overflow-wrap:anywhere}
+.qi-top input{width:110px;flex:none;text-align:right;font-family:var(--mono)}
+.qi .codein{font-family:var(--mono)}
+.qi .link.small{align-self:flex-start;font-size:12.5px}
+.qform .sum{margin-top:8px}
+.q .qb{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px}
 </style>
 </head>
 <body>
@@ -582,6 +592,7 @@ const CSTAGE={new:0,assigned:0,searching:1,found:1,offered:2,ordered:3,shipped:4
 const OST={assigned:'Супорида шуд',bought:'Аз паставшик гирифта шуд',packed:'Бастабандӣ шуд',shipped:'Ба карго дода шуд'};
 const PRIV_KEYS=['quotes','chosenQ','cost','supplier','supplierPhone','workerNote','com','comPct','comW','comPaid','comPaidAt'];
 /* ===== музди коргар ===== */
+const chosenIC=r=>{const q=(r.quotes||[]).find(x=>x.id===r.chosenQ);return q&&Array.isArray(q.itemCosts)?q.itemCosts:null};
 const profitOf=r=>Math.round(((+r.price||0)-(+r.cost||0))*100)/100;
 const comWorker=r=>r.comW||r.workerId||r.orderWorkerId||null;
 const wPct=wid=>{const w=(S.workers||{})[wid]||{};return w.comPct!=null&&w.comPct!==''?+w.comPct:10};
@@ -1047,11 +1058,18 @@ function quotesHtml(r,v,canAdd){
   const qs=(r.quotes||[]).slice().sort((a,b)=>(+a.cost||0)-(+b.cost||0));
   const min=qs.length?+qs[0].cost:null;
   const list=qs.length?`<div class="qlist">${qs.map(q=>`<div class="q ${r.chosenQ===q.id?'chosen':''}"><span class="qs">${esc(q.sup)} ${qs.length>1&&+q.cost===min?'<span class="best">арзонтарин</span>':''} ${r.chosenQ===q.id?'<span class="best">интихоб шуд</span>':''}</span><span class="qc">${money(q.cost)}</span>
-    <span class="qm"><span>${esc(KIND[q.kind]||'')}</span>${q.eta?`<span>${esc(q.eta)} рӯз</span>`:''}${q.ph?`<span>${esc(q.ph)}</span>`:''}${q.note?`<span>${esc(q.note)}</span>`:''}<span>${esc(uname(q.by))} · ${ago(q.t)}</span></span>
+    <span class="qm"><span>${esc(KIND[q.kind]||'')}</span>${q.eta?`<span>${esc(q.eta)} рӯз</span>`:''}${q.ph?`<span>${esc(q.ph)}</span>`:''}${q.note?`<span>${esc(q.note)}</span>`:''}<span>${esc(uname(q.by))} · ${ago(q.t)}</span></span>${Array.isArray(q.itemCosts)&&itemsOf(r).length>1?`<span class="qb">${itemsOf(r).map((it,i)=>it.off?'':`<span><code class="pc">${esc(it.code||it.n)}</code> ${q.itemCosts[i]!=null?num(q.itemCosts[i]):'<span class="muted">нест</span>'}</span>`).join('')}</span>`:''}
     ${v==='admin'||canAdd?`<span class="qa">${v==='admin'&&r.chosenQ!==q.id?`<button class="btn ok" data-act="chooseq" data-id="${r.id}" data-q="${q.id}" style="height:34px">Интихоб</button>`:''}${q.ph?`<a class="btn" style="height:34px" href="${waLink(q.ph,waText(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}${v==='admin'||(canAdd&&actIds().includes(q.by))?`<button class="link" data-act="delq" data-id="${r.id}" data-q="${q.id}" style="color:var(--bad)">Нест кардан</button>`:''}</span>`:''}</div>`).join('')}</div>`:`<div class="small muted">Ҳоло нарх нест.</div>`;
-  const form=!canAdd?'':S.qOpen!==r.id?`<div><button class="btn pri" data-act="qopen" data-id="${r.id}">+ Нарх илова кардан</button></div>`:`<div class="cform"><div class="grid"><label>Паставшик<input id="q-sup-${r.id}" placeholder="Номи мағоза"></label><label>Нархи харид (${esc(C.cur)})<input id="q-cost-${r.id}" type="number" step="0.01" min="0" inputmode="decimal"></label>
-    <label>Намуд<select id="q-kind-${r.id}">${Object.entries(KIND).map(([k,l])=>`<option value="${k}" ${(r.condition==='used'?'used':'orig')===k?'selected':''}>${l}</option>`).join('')}</select></label><label>Расонидан (рӯз)<input id="q-eta-${r.id}" type="number" min="0" step="1"></label>
-    <label>Телефони паставшик<input id="q-ph-${r.id}" inputmode="tel"></label><label>Эзоҳ<input id="q-note-${r.id}" placeholder="Сифат, ранг…"></label></div><div class="bar"><button class="btn pri" data-act="addq" data-id="${r.id}">Сабт кардан</button><button class="btn" data-act="qclose">Бекор</button></div></div>`;
+  const its=itemsOf(r);
+  const qrow=(it,i)=>it.off?'':`<div class="qi"><div class="qi-top"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span><input id="q-ip-${r.id}-${i}" data-qsum="${r.id}" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Нарх" aria-label="Нархи харид"></div>
+      ${S.qNc&&S.qNc[r.id+'-'+i]?`<input id="q-nc-${r.id}-${i}" class="codein" placeholder="Коди нав (агар иваз шуд)" value="${esc(it.code||'')}" autocapitalize="characters" spellcheck="false">`:`<button type="button" class="link small" data-act="qnc" data-id="${r.id}" data-v="${i}">↻ Код иваз шуд</button>`}</div>`;
+  const form=!canAdd?'':S.qOpen!==r.id?`<div><button class="btn pri" data-act="qopen" data-id="${r.id}">+ Нарх илова кардан</button></div>`:`<div class="cform qform">
+    <div class="grid"><label>Паставшик<input id="q-sup-${r.id}" placeholder="Номи мағоза"></label><label>Телефони паставшик<input id="q-ph-${r.id}" inputmode="tel" placeholder="ихтиёрӣ"></label></div>
+    <div><div class="small muted" style="font-weight:600;margin-bottom:6px">Нархи харид барои ҳар қисм (${esc(C.cur)}). Агар паставшик надорад — холӣ монед.</div><div class="qitems">${its.map(qrow).join('')}</div>
+      <div class="sum"><span>Ҷамъ</span><span id="q-tot-${r.id}">0</span></div></div>
+    <div class="grid"><label>Намуд<select id="q-kind-${r.id}">${Object.entries(KIND).map(([k,l])=>`<option value="${k}" ${(r.condition==='used'?'used':'orig')===k?'selected':''}>${l}</option>`).join('')}</select></label><label>Расонидан (рӯз)<input id="q-eta-${r.id}" type="number" min="0" step="1"></label>
+    <label class="full">Эзоҳ<input id="q-note-${r.id}" placeholder="Сифат, ранг…"></label></div>
+    <div class="bar"><button class="btn pri" data-act="addq" data-id="${r.id}">Сабт кардан</button><button class="btn" data-act="qclose">Бекор</button></div></div>`;
   return`<div class="card"><h3>Нархи паставшикҳо · ${qs.length}</h3>${list}${form}</div>`;
 }
 function sheet(){
@@ -1076,7 +1094,7 @@ function sheet(){
     const live=its.filter(i=>!i.off),canPrice=['new','assigned','searching','found','offered'].includes(r.status);
     const priceCard=canPrice?`<div class="card pricing"><h3>${r.status==='offered'?'Нарх фиристода шуд — метавонед иваз кунед':'Нархи фурӯш ба муштарӣ'}</h3>
       ${r.cost?`<div class="bal"><div><span>Нархи харид${r.supplier?' · '+esc(r.supplier):''}</span><b>${money(r.cost)}</b></div>${r.workerId?`<div><span>Ёфт</span><b style="font-family:var(--body)">${esc(uname(r.workerId))}</b></div>`:''}</div>`:'<div class="small muted">Нархи харид ҳанӯз нест — метавонед нархро худатон гузоред.</div>'}
-      ${r.cost&&live.length===1?`<div class="bar"><span class="small muted">Фоида:</span>${[10,20,30,50].map(p=>`<button class="chip" data-act="markup" data-id="${r.id}" data-v="${p}" style="height:34px">+${p}%</button>`).join('')}</div>`:''}
+      ${r.cost&&(live.length===1||chosenIC(r))?`<div class="bar"><span class="small muted">Фоида:</span>${[10,20,30,50].map(p=>`<button class="chip" data-act="markup" data-id="${r.id}" data-v="${p}" style="height:34px">+${p}%</button>`).join('')}</div>`:''}
       <div class="items">${its.map((it,i)=>it.off?`<div class="it off"><span class="nm">${inmH(it)}</span><span class="small">муштарӣ рад кард</span></div>`:`<div class="it"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span><input id="d-ip-${r.id}-${i}" data-pp="${r.id}" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Нарх ${esc(C.cur)}" value="${esc(it.price??'')}" aria-label="Нархи ${esc(it.n)}"></div>`).join('')}</div>
       <div class="bal"><div><span>Ҷамъ ба муштарӣ</span><b id="pt-${r.id}">—</b></div><div class="ok-b"><span>Фоидаи шумо</span><b id="pp-${r.id}">—</b></div></div>
       <div class="grid"><label>Кафолат (рӯз)<input id="d-war-${r.id}" type="number" min="0" value="${esc(r.warrantyDays||'')}" placeholder="0"></label><label>Эзоҳ ба муштарӣ<input id="d-onote-${r.id}" value="${esc(r.offerNote||'')}" placeholder="Мӯҳлат: 2 рӯз"></label></div>
@@ -1211,7 +1229,7 @@ function calcPP(id){
   if(pp){if(any&&r.cost){const p=sum-r.cost;pp.textContent=money(Math.round(p*100)/100)+(sum?' · '+Math.round(p/sum*100)+'%':'');pp.style.color=p<0?'var(--bad)':''}else pp.textContent='—'}
 }
 
-document.addEventListener('input',e=>{if(e.target.id==='n-codes'){codesList();return}if(e.target.dataset&&e.target.dataset.cpct){const id=e.target.dataset.cpct,p=parseFloat(e.target.value)||0,pr=+e.target.dataset.profit||0;const a=document.getElementById('c-amt-'+id);if(a)a.value=Math.round(Math.max(0,pr)*p/100*100)/100;return}if(e.target.classList&&e.target.classList.contains('cqin')){S.cq=S.cq||{};S.cq[e.target.dataset.code]=Math.max(1,parseInt(e.target.value)||1);return}});
+document.addEventListener('input',e=>{if(e.target.id==='n-codes'){codesList();return}if(e.target.dataset&&e.target.dataset.qsum){const id=e.target.dataset.qsum;let s=0;document.querySelectorAll('[data-qsum="'+id+'"]').forEach(x=>{s+=parseFloat(x.value)||0});const t=document.getElementById('q-tot-'+id);if(t)t.textContent=num(Math.round(s*100)/100)+' '+C.cur;return}if(e.target.dataset&&e.target.dataset.cpct){const id=e.target.dataset.cpct,p=parseFloat(e.target.value)||0,pr=+e.target.dataset.profit||0;const a=document.getElementById('c-amt-'+id);if(a)a.value=Math.round(Math.max(0,pr)*p/100*100)/100;return}if(e.target.classList&&e.target.classList.contains('cqin')){S.cq=S.cq||{};S.cq[e.target.dataset.code]=Math.max(1,parseInt(e.target.value)||1);return}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-cq]');if(!b)return;e.preventDefault();const inp=b.parentNode.querySelector('.cqin');const v=Math.max(1,(parseInt(inp.value)||1)+(+b.dataset.cq));inp.value=v;S.cq=S.cq||{};S.cq[b.dataset.code]=v},true);
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;render()}else if(e.target.dataset&&e.target.dataset.pp)calcPP(e.target.dataset.pp)});
 document.addEventListener('submit',async e=>{
@@ -1388,7 +1406,7 @@ document.addEventListener('click',async e=>{
     case'actrole':S.actRole=b.dataset.v;break;
     case'kpi':{const k=b.dataset.v;if(k==='profit'){S.adminTab='rep';S.repTab='o';render();scrollTo(0,0);return}
       S.fStatus=k;S.fWorker='all';S.fGroup='all';S.q='';render();setTimeout(()=>{const x=document.getElementById('list-anchor');if(x)x.scrollIntoView({behavior:'smooth',block:'start'})},30);return}
-    case'markup':{if(!r||!r.cost)return;const i=itemsOf(r).findIndex(x=>!x.off);const el=document.getElementById('d-ip-'+id+'-'+i);if(el){el.value=Math.ceil(r.cost*(1+(+b.dataset.v)/100));calcPP(id)}return}
+    case'markup':{if(!r||!r.cost)return;const ic=chosenIC(r);if(ic){itemsOf(r).forEach((it,i)=>{const el=document.getElementById('d-ip-'+id+'-'+i);if(el&&!it.off&&ic[i]!=null)el.value=Math.ceil(ic[i]*(1+(+b.dataset.v)/100))});calcPP(id);return}const i=itemsOf(r).findIndex(x=>!x.off);const el=document.getElementById('d-ip-'+id+'-'+i);if(el){el.value=Math.ceil(r.cost*(1+(+b.dataset.v)/100));calcPP(id)}return}
     case'copy':case'copytxt':{const t=a==='copy'?waText(r):(document.getElementById(b.dataset.v)||{}).value||'';try{await navigator.clipboard.writeText(t);toast('Нусха гирифта шуд')}catch(_){toast('Нусха нашуд — матнро дастӣ интихоб кунед')}return}
     case'assign':{const g=val('d-group-'+id);if(!g)return;await upd(id,{group:g,workerId:null,assignedAt:r.assignedAt||Date.now(),status:['new','assigned','notfound'].includes(r.status)?'assigned':r.status},'Ба гурӯҳ фиристода шуд: '+GRP[g]);
       if(S.privs[id])setDoc(doc(db,'priv',id),{workerId:null},{merge:true}).catch(()=>{});return}
@@ -1398,9 +1416,16 @@ document.addEventListener('click',async e=>{
     case'take':{const w=S.wid||actWorker();if(!w)return;
       if(await upd(id,{workerId:w,status:'searching',assignedAt:r.assignedAt||Date.now()},'Ба кор гирифт: '+uname(w)))
         setDoc(doc(db,'priv',id),{workerId:w},{merge:true}).catch(()=>{});return}
-    case'addq':{const sup=val('q-sup-'+id),cost=fnum('q-cost-'+id);if(!sup||!(cost>0)){toast('Номи паставшик ва нархро нависед');return}
-      const q={id:'q'+Date.now().toString(36),sup,cost,kind:val('q-kind-'+id)||'orig',eta:val('q-eta-'+id),ph:val('q-ph-'+id),note:val('q-note-'+id),by:actor(),t:Date.now()};
-      if(await upd(id,{quotes:(r.quotes||[]).concat([q])},'Нарх: '+sup+' · '+money(cost))&&!(S.qOpen=null))['q-sup-','q-cost-','q-eta-','q-ph-','q-note-'].forEach(p=>{const x=document.getElementById(p+id);if(x)x.value=''});return}
+    case'qnc':S.qNc=S.qNc||{};S.qNc[id+'-'+b.dataset.v]=1;render();setTimeout(()=>{const x=document.getElementById('q-nc-'+id+'-'+b.dataset.v);if(x){x.focus();x.select()}},30);return;
+    case'addq':{const sup=val('q-sup-'+id);const its0=itemsOf(r);const ic=its0.map((it,i)=>{if(it.off)return null;const v=fnum('q-ip-'+id+'-'+i);return v>0?v:null});
+      const cost=Math.round(ic.reduce((a,v)=>a+(v||0),0)*100)/100;
+      if(!sup||!(cost>0)){toast('Номи паставшик ва камаш як нархро нависед');return}
+      const src=S.rawReqs[id]||(S.extra||{})[id]||(S.extraO||{})[id]||r;const raw=itemsOf(src).map(x=>({...x}));const chg=[];
+      raw.forEach((it,i)=>{const el=document.getElementById('q-nc-'+id+'-'+i);if(!el)return;const nc=el.value.toUpperCase().replace(/\s+/g,' ').trim();if(nc&&nc!==(it.code||'')){chg.push((it.code||it.n)+' → '+nc);if(it.code&&!it.oldCode)it.oldCode=it.code;if(!it.n||it.n===it.code)it.n=nc;it.code=nc;if(it.oldCode===it.code)delete it.oldCode}});
+      if(chg.length)await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Код иваз шуд: '+chg.join(', '),true);
+      S.qNc={};
+      const q={id:'q'+Date.now().toString(36),sup,cost,itemCosts:its0.length>1?ic:null,kind:val('q-kind-'+id)||'orig',eta:val('q-eta-'+id),ph:val('q-ph-'+id),note:val('q-note-'+id),by:actor(),t:Date.now()};
+      if(await upd(id,{quotes:(r.quotes||[]).concat([q])},'Нарх: '+sup+' · '+money(cost))&&!(S.qOpen=null)){app.querySelectorAll('[id^="q-"]').forEach(x=>{if(x.tagName==='INPUT')x.value=''});render()}return}
     case'delq':{const qid=b.dataset.q;const patch={quotes:(r.quotes||[]).filter(q=>q.id!==qid)};if(r.chosenQ===qid)patch.chosenQ=null;await upd(id,patch,'Нарх нест карда шуд');return}
     case'chooseq':{const q=(r.quotes||[]).find(x=>x.id===b.dataset.q);if(!q)return;await upd(id,{chosenQ:q.id,cost:q.cost,supplier:q.sup,supplierPhone:q.ph||''},'Интихоб: '+q.sup+' · '+money(q.cost));return}
     case'found':{if(!(r.quotes||[]).length){toast('Камаш як нарх илова кунед');return}const best=r.quotes.slice().sort((x,y)=>x.cost-y.cost)[0];
