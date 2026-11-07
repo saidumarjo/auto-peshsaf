@@ -468,6 +468,7 @@ function applyCfg(d){
 applyCfg(null);
 const CSTEPS=['Қабул','Ҷустуҷӯ','Ёфт шуд','Заказ','Дар роҳ','Дода шуд'];
 const CSTAGE={new:0,assigned:0,searching:1,found:1,offered:2,ordered:3,shipped:4,delivered:5};
+const OST={assigned:'Супорида шуд',bought:'Аз паставшик гирифта шуд',packed:'Бастабандӣ шуд',shipped:'Ба карго дода шуд'};
 const PRIV_KEYS=['quotes','chosenQ','cost','supplier','supplierPhone','workerNote'];
 const IC=(p,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const ICONS={req:'<path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 11h6M9 15h4"/>',debt:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',rep:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6 6 0 0 0-4-5.6"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
@@ -559,9 +560,9 @@ function rebuild(){
   for(const [id,w] of Object.entries(S.workers))u[id]={...w,role:w.active===false?'removed':'worker'};
   for(const [id,c] of Object.entries(S.customers))u[id]={...c,role:'customer'};
   S.users=u;
-  const all={...S.extra,...S.rawReqs};
+  const all={...S.extra,...(S.extraO||{}),...S.rawReqs};
   S.reqs=Object.entries(all).map(([id,d])=>{
-    const p=S.privs[id]||{};const custOff=d.custOff||[];
+    const p={...((S.privsO||{})[id]||{}),...(S.privs[id]||{})};const custOff=d.custOff||[];
     const items=itemsOf(d).map((it,i)=>({...it,off:!!it.off||custOff.includes(i)}));
     const priced=items.some(it=>it.price>0);
     const price=priced?items.filter(it=>!it.off).reduce((a,it)=>a+(+it.price||0),0):(d.price||null);
@@ -608,7 +609,7 @@ function cards(list,showWorker){
     <span class="l1"><span class="tag">${esc(r.code)}</span><span class="urg ${u}">${URG[u]?URG[u].l:''}</span>${dueTxt(r)||`<span class="time">${ago(r.updatedAt||r.createdAt)}</span>`}</span>
     <span class="r1">${r.price&&isAdminView()?`<span class="price small">${money(r.price)}</span>`:''}${pill(r.status)}</span>
     <span class="t1">${esc(itemsTxt(r))}</span>
-    <span class="t2"><span>${esc(r.car)} ${esc(r.year)}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}</span>
+    <span class="t2"><span>${esc(r.car)} ${esc(r.year)}</span>${isAdminView()?`<span>${esc(custName(r))}</span>`:''}${(r.quotes||[]).length?`<span>${r.quotes.length} нарх</span>`:''}${(r.photos||[]).length?`<span>${r.photos.length} акс</span>`:''}${bal?`<span class="who none">қарз ${money(bal)}</span>`:''}${showWorker&&!SOLD.includes(r.status)?`<span class="who ${r.workerId?'':'none'}">Масъул: ${r.workerId?esc(uname(r.workerId)):'таъин нашуд'}</span>`:''}${showWorker&&SOLD.includes(r.status)?`<span class="who ${r.orderWorkerId?'':'none'}">Заказ: ${r.orderWorkerId?esc(uname(r.orderWorkerId))+' · '+esc(OST[r.ordStage]||OST.assigned):'масъул нест'}</span>`:''}</span>
   </button>`}).join('')}</div>`;
 }
 const WD=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'],MO=['январ','феврал','март','апрел','май','июн','июл','август','сентябр','октябр','ноябр','декабр'];
@@ -641,9 +642,10 @@ function adminView(){
   const c=s=>base.filter(r=>r.status===s).length;
   const fa=base.filter(r=>wasFound(r)&&inPer(r)),sd=base.filter(r=>SOLD.includes(r.status)&&inPer(r));
   const items=[['active','Ҳама фаъол',base.filter(r=>ACTIVE.includes(r.status)).length],['late','Мӯҳлат гузашт',base.filter(overdue).length,'k-x'],...ACTIVE.map(s=>[s,ST[s].l,c(s),kc(s)]),['foundall','Ёфтшудаҳо',fa.length,'k-g'],['sold','Фурӯхташуда',sd.length,'k-g'],['done','Анҷомёфта',base.filter(r=>!ACTIVE.includes(r.status)).length],['all','Ҳама',base.length]];
-  const list=S.fStatus==='foundall'?fa:S.fStatus==='sold'?sd:S.fStatus==='all'?base:S.fStatus==='late'?base.filter(overdue):S.fStatus==='active'?base.filter(r=>ACTIVE.includes(r.status)):S.fStatus==='done'?base.filter(r=>!ACTIVE.includes(r.status)):base.filter(r=>r.status===S.fStatus);
-  const nNew=S.reqs.filter(r=>r.status==='new').length,nF=S.reqs.filter(r=>r.status==='found').length,nL=S.reqs.filter(overdue).length;
-  const al=[nL?[nL+' дархост мӯҳлаташ гузашт','late']:null,nNew?[nNew+' дархости нав супоридан лозим','new']:null,nF?[nF+' дархост нарх лозим','found']:null].filter(Boolean);
+  const ordNo=base.filter(r=>r.status==='ordered'&&!r.orderWorkerId);
+  const list=S.fStatus==='ordnow'?ordNo:S.fStatus==='foundall'?fa:S.fStatus==='sold'?sd:S.fStatus==='all'?base:S.fStatus==='late'?base.filter(overdue):S.fStatus==='active'?base.filter(r=>ACTIVE.includes(r.status)):S.fStatus==='done'?base.filter(r=>!ACTIVE.includes(r.status)):base.filter(r=>r.status===S.fStatus);
+  const nO=S.reqs.filter(r=>r.status==='ordered'&&!r.orderWorkerId).length,nNew=S.reqs.filter(r=>r.status==='new').length,nF=S.reqs.filter(r=>r.status==='found').length,nL=S.reqs.filter(overdue).length;
+  const al=[nO?[nO+' заказ масъул надорад','ordnow']:null,nL?[nL+' дархост мӯҳлаташ гузашт','late']:null,nNew?[nNew+' дархости нав супоридан лозим','new']:null,nF?[nF+' дархост нарх лозим','found']:null].filter(Boolean);
   const alert=al.length?`<button class="alert" data-act="fs" data-v="${al[0][1]}">${al.map(a=>a[0]).join(' · ')}<span class="arr">→</span></button>`:'';
   const tool=`<div class="tool">${searchBox('Ҷустуҷӯ: рақам, мошин, қисм, муштарӣ, паставшик')}<select id="fg" data-act="fgsel" class="chip" style="width:auto">${[['all','Ҳама гурӯҳҳо'],['new','Нав'],['used','Кӯҳна'],['none','Бе гурӯҳ']].map(([k,l])=>`<option value="${k}" ${S.fGroup===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn pri desk" data-act="newreq">+ Дархости нав</button></div>`;
   const wsel=S.fWorker!=='all'&&S.fWorker!=='none'&&S.users[S.fWorker]?wCard(S.fWorker,S.users[S.fWorker],0,false):'';
@@ -743,14 +745,16 @@ function workerView(){
   const aw=actWorker();
   const g0=(S.users[isAdm?aw:S.wid]||{}).group;const myG=!g0||g0==='all'?null:g0;
   const ids=actIds();const mine=r=>ids.includes(r.workerId);
-  const pool=S.reqs.filter(r=>mine(r)||(!r.workerId&&r.status==='assigned'&&r.group&&(!myG||r.group===myG))).filter(matchQ);
-  const tabs={new:pool.filter(r=>r.status==='assigned'),work:pool.filter(r=>r.status==='searching'&&mine(r)),
+  const isOrd=r=>ids.includes(r.orderWorkerId)&&['ordered','shipped'].includes(r.status);
+  const pool=S.reqs.filter(r=>mine(r)||isOrd(r)||(!r.workerId&&r.status==='assigned'&&r.group&&(!myG||r.group===myG))).filter(matchQ);
+  const tabs={ord:pool.filter(isOrd),new:pool.filter(r=>r.status==='assigned'),work:pool.filter(r=>r.status==='searching'&&mine(r)),
     done:pool.filter(r=>['found','offered',...SOLD,'returned','notfound'].includes(r.status)&&mine(r)),all:pool.filter(r=>mine(r)&&ACTIVE.includes(r.status))};
-  const labels={new:['Нав барои ман','k-n'],work:['Дар ҷустуҷӯ','k-s'],done:['Ёфтаҳои ман','k-d'],all:['Ҳамаи корҳои ман','']};
+  const labels={ord:['Заказҳо барои ман','k-g'],new:['Нав барои ман','k-n'],work:['Дар ҷустуҷӯ','k-s'],done:['Ёфтаҳои ман','k-d'],all:['Ҳамаи корҳои ман','']};
   const ws=workers();
   const late=pool.filter(r=>mine(r)&&overdue(r)).length;
   const head=isAdm?(ws.length?`<div class="note">Панели кадом коргарро бинед? Ҳар коргар танҳо дархостҳои худашро мебинад.</div><div class="tool"><select data-act="awsel" id="aw" class="chip" style="width:auto;flex:1">${ws.map(([id,u])=>`<option value="${id}" ${aw===id?'selected':''}>${esc(u.name)} · ${esc(GRPS[u.group]||'')}</option>`).join('')}</select>${searchBox('Ҷустуҷӯ')}</div>`:`<div class="note">Аввал дар қисми «Одамон» коргар илова кунед.</div>`)
     :`<div class="note">Гурӯҳи шумо: <b>${esc(GRPS[g0]||'—')}</b>. Барои ҳар дархост нархи якчанд паставшикро нависед — роҳбар беҳтаринашро интихоб мекунад.</div><div class="tool">${searchBox('Ҷустуҷӯ')}</div>`;
+  if(!S.wTabSet&&tabs.ord.length&&S.wTab==='new')S.wTab='ord';
   return head+(late?`<button class="alert" data-act="wt" data-v="work">${late} дархост мӯҳлаташ гузашт<span class="arr">→</span></button>`:'')+pipe(Object.keys(labels).map(k=>[k,labels[k][0],tabs[k].length,labels[k][1]]),S.wTab,'wt')+cards(tabs[S.wTab]||[],S.wTab==='all');
 }
 
@@ -857,6 +861,11 @@ function sheet(){
     const msgCard=ph0?`<div class="card"><h3>Хабар ба муштарӣ (WhatsApp)</h3><div class="wa">${esc(custMsg(r))}</div><div class="bar"><a class="btn ${['offered',...SOLD].includes(r.status)?'pri':''}" href="${waLink(ph0,custMsg(r))}" target="_blank" rel="noopener">Дар WhatsApp фиристодан</a><button class="btn" data-act="copytxt" data-v="cm-${r.id}">Нусха</button></div><textarea id="cm-${r.id}" hidden>${esc(custMsg(r))}</textarea></div>`:'';
     const top=['found','offered'].includes(r.status);
     if(top)act+=priceCard+(r.status==='offered'?msgCard:'');
+    if(['ordered','shipped'].includes(r.status)){const stg=['assigned','bought','packed','shipped'],cur=r.status==='shipped'?3:Math.max(0,stg.indexOf(r.ordStage||'assigned'));
+      act+=`<div class="card pricing"><h3>${r.orderWorkerId?'Заказ: масъул ва ҳолат':'Заказ омад — масъулро интихоб кунед'}</h3><div class="small muted">Масъул молро аз паставшик мегирад, бастабандӣ мекунад ва ба карго месупорад.</div>
+        ${ws.length?`<div class="pick">${ws.map(([wid,u])=>crewBtn(wid,u,r.orderWorkerId===wid,'assignord',`data-id="${r.id}"`)).join('')}</div>`:'<div class="small muted">Аввал дар «Одамон» коргар илова кунед.</div>'}
+        ${r.orderWorkerId?`<div class="steps">${stg.map((_,i)=>`<i class="${i<=cur?'on':''}"></i>`).join('')}</div><div class="steps-l">${stg.map((s,i)=>`<span class="${i===cur?'on':''}">${['Супорида','Гирифта','Баста','Дар карго'][i]}</span>`).join('')}</div>`:''}
+        ${r.cargo||r.tracking?`<div class="small">Карго: <b>${esc(r.cargo||'—')}</b>${r.tracking?' · '+esc(r.tracking):''}</div>`:''}</div>`}
     if(ACTIVE.slice(0,4).includes(r.status)||r.status==='notfound')act+=`<div class="card"><h3>Масъулро интихоб кунед</h3>${ws.length?`<div class="pick">${ws.map(([id,u])=>crewBtn(id,u,r.workerId===id,'assignto',`data-id="${r.id}"`)).join('')}</div>`:'<div class="small muted">Аввал дар қисми «Одамон» коргар илова кунед.</div>'}
       <div class="small muted">Ё ба тамоми гурӯҳ фиристед — ҳар коргари гурӯҳ гирифта метавонад:</div>
       <div class="bar"><select id="d-group-${r.id}" style="flex:1;width:auto">${Object.entries(GRP).map(([k,l])=>`<option value="${k}" ${g0===k?'selected':''}>${l}</option>`).join('')}</select><button class="btn" data-act="assign" data-id="${r.id}">Ба гурӯҳ</button></div></div>`;
@@ -881,6 +890,12 @@ function sheet(){
     if(r.status!=='offered')act+=msgCard;
   }
   if(v==='worker'){
+    if(actIds().includes(r.orderWorkerId)&&['ordered','shipped'].includes(r.status)){const st=r.ordStage||'assigned';
+      act+=`<div class="card pricing"><h3>Заказ: тайёр кардан ва ба карго</h3>
+        <div class="bal"><div><span>Паставшик</span><b style="font-family:var(--body)">${esc(r.supplier||'—')}</b></div>${r.supplierPhone?`<div><span>Телефон</span><b><a class="link" href="${waLink(r.supplierPhone,'Салом! Барои заказ №'+r.code+':\n'+waText(r))}" target="_blank" rel="noopener">${esc(r.supplierPhone)}</a></b></div>`:''}${r.cost?`<div><span>Нархи харид</span><b>${money(r.cost)}</b></div>`:''}</div>
+        <div class="small">Ҳолат: <b>${esc(r.status==='shipped'?OST.shipped:OST[st])}</b></div>
+        ${r.status==='ordered'?`<div class="bar">${st==='assigned'?`<button class="btn pri" data-act="ostage" data-id="${r.id}" data-v="bought">Аз паставшик гирифтам</button>`:''}${st==='bought'?`<button class="btn pri" data-act="ostage" data-id="${r.id}" data-v="packed">Бастабандӣ шуд</button>`:''}</div>
+        ${st==='packed'?`<div class="grid"><label>Номи карго<input id="o-cargo-${r.id}" value="${esc(r.cargo||'')}" placeholder="Масалан: Cargo Dushanbe"></label><label>Рақами пайгирӣ / накладной<input id="o-trk-${r.id}" value="${esc(r.tracking||'')}"></label></div><div><button class="btn ok" data-act="ocargo" data-id="${r.id}">Ба карго супоридам</button></div>`:''}`:''}</div>`;}
     if(r.status==='assigned'&&(!r.workerId||isMine))act+=`<div class="card"><h3>Кор</h3><div><button class="btn pri" data-act="take" data-id="${r.id}">Ба кор гирифтан</button></div></div>`;
     if(['searching','found'].includes(r.status)&&isMine){
       act+=quotesHtml(r,v,true);
@@ -1052,7 +1067,7 @@ document.addEventListener('click',async e=>{
     case'atab':S.adminTab=b.dataset.v;render();scrollTo(0,0);return;
     case'rtab':S.repTab=b.dataset.v;break;
     case'fs':S.fStatus=b.dataset.v;break;
-    case'wt':S.wTab=b.dataset.v;break;
+    case'wt':S.wTab=b.dataset.v;S.wTabSet=true;break;
     case'open':S.open=id;S.confirmDel=null;break;
     case'close':S.open=null;S.qOpen=null;break;
     case'ctab':S.cTab=b.dataset.v;render();scrollTo(0,0);return;
@@ -1114,6 +1129,11 @@ document.addEventListener('click',async e=>{
     case'setstatus':{const s=val('d-status-'+id);if(s===r.status)return;await upd(id,{status:s},'Ҳолат: '+ST[s].l);return}
     case'setcost':{const c=fnum('d-cost-'+id);await upd(id,{cost:c},'Нархи харид: '+money(c));return}
     case'logodel':try{await setDoc(doc(db,'settings','app'),{logo:''},{merge:true});toast('Логотип нест шуд')}catch(err){toast('Нашуд: '+errTxt(err))}return;
+    case'assignord':{const w=b.dataset.v,u=S.users[w];if(!u||r.orderWorkerId===w)return;
+      if(await upd(id,{orderWorkerId:w,ordStage:r.ordStage||'assigned'},'Масъули заказ: '+u.name))setDoc(doc(db,'priv',id),{orderWorkerId:w},{merge:true}).catch(()=>{});return}
+    case'ostage':{const s=b.dataset.v;await upd(id,{ordStage:s},'Заказ: '+OST[s]);return}
+    case'ocargo':{const cg=val('o-cargo-'+id),tk=val('o-trk-'+id);if(!cg){toast('Номи каргоро нависед');return}
+      await upd(id,{status:'shipped',ordStage:'shipped',cargo:cg,tracking:tk,shippedAt:Date.now()},'Ба карго дода шуд: '+cg+(tk?' · '+tk:''));return}
     case'delno':S.confirmDel=null;break;
     case'delreq':{if(S.confirmDel!==id){S.confirmDel=id;break}
       try{await deleteDoc(doc(db,'requests',id));await deleteDoc(doc(db,'priv',id)).catch(()=>{});for(const p of (r.photos||[]))deleteDoc(doc(db,'photos',p.id)).catch(()=>{});S.open=null;S.confirmDel=null;toast('Дархост №'+r.code+' нест карда шуд')}catch(err){toast('Нест нашуд: '+errTxt(err))}return}
@@ -1127,7 +1147,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(S.lb)S.lb=null;e
 setInterval(()=>{const ae=document.activeElement;if(!ae||ae===document.body)render()},60000);
 
 /* ===== data subscriptions ===== */
-function stopAll(){unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={};S.extra={};S.privs={};S.workers={};S.customers={}}
+function stopAll(){unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={};S.extra={};S.extraO={};S.privsO={};S.privs={};S.workers={};S.customers={}}
 function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);toast('Маълумот бор нашуд ('+errTxt(err)+')')}))}
 function waitAll(n){let left=n;S.ready=false;const t=setTimeout(()=>{S.slow=true;render()},10000);return()=>{if(--left<=0){clearTimeout(t);S.ready=true;S.slow=false}rebuild();render()}}
 function startAdmin(){
@@ -1139,12 +1159,14 @@ function startAdmin(){
   sub(collection(db,'customers'),firstOnce(s=>{S.customers={};s.forEach(d=>S.customers[d.id]=d.data())}),'customers');
 }
 function startWorker(wid){
-  stopAll();S.wid=wid;const done=waitAll(4);
+  stopAll();S.wid=wid;const done=waitAll(6);
   const firstOnce=f=>{let first=true;return s=>{f(s);if(first){first=false;done()}else{rebuild();render()}}};
   sub(query(collection(db,'requests'),where('workerId','==',wid)),firstOnce(s=>{S.rawReqs={};s.forEach(d=>S.rawReqs[d.id]=d.data())}),'my requests');
   sub(query(collection(db,'requests'),where('status','==','assigned'),where('workerId','==',null)),firstOnce(s=>{S.extra={};s.forEach(d=>S.extra[d.id]=d.data())}),'open requests');
   sub(query(collection(db,'priv'),where('workerId','==',wid)),firstOnce(s=>{S.privs={};s.forEach(d=>S.privs[d.id]=d.data())}),'priv');
   sub(collection(db,'workers'),firstOnce(s=>{S.workers={};s.forEach(d=>S.workers[d.id]=d.data())}),'workers');
+  sub(query(collection(db,'requests'),where('orderWorkerId','==',wid)),firstOnce(s=>{S.extraO={};s.forEach(d=>S.extraO[d.id]=d.data())}),'my orders');
+  sub(query(collection(db,'priv'),where('orderWorkerId','==',wid)),firstOnce(s=>{S.privsO={};s.forEach(d=>S.privsO[d.id]=d.data())}),'order priv');
 }
 async function startCustomer(cidv){
   stopAll();S.cid=cidv;const done=waitAll(2);
