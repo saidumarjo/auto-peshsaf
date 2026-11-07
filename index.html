@@ -440,6 +440,12 @@ h3{font-size:10.5px}
 .simple-f details.more[open]>summary::before{content:"− "}
 .simple-f details.more[open]>summary{margin-bottom:12px}
 .btn.block{width:100%;height:52px;font-size:16px;justify-content:center}
+
+.irow3{display:grid;grid-template-columns:1fr 70px;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.irow3 .codein{grid-column:1/-1;font-family:var(--mono);letter-spacing:.03em}
+.bulk{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.bulk textarea{font-family:var(--mono);font-size:15px;min-height:130px;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--ink)}
+code.pc{font:600 12px var(--mono);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:0 5px;color:var(--ink);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -527,7 +533,9 @@ const initials=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).joi
 const kc=s=>'k-'+((ST[s]||{}).k||'a');
 const pill=s=>`<span class="pill ${kc(s)}">${esc((ST[s]||{l:s}).l)}</span>`;
 const itemsOf=r=>Array.isArray(r.items)&&r.items.length?r.items:[{n:r.parts||'',q:r.qty||1,price:r.price||null,off:false}];
-const itemsTxt=r=>itemsOf(r).filter(i=>!i.off).map(i=>i.n+(i.q>1?' × '+i.q:'')).join(', ');
+const inm=i=>(i.n||'')+(i.code&&i.code!==i.n?' ('+i.code+')':'');
+const inmH=i=>`${esc(i.n||'')}${i.code&&i.code!==i.n?` <code class="pc">${esc(i.code)}</code>`:''}`;
+const itemsTxt=r=>itemsOf(r).filter(i=>!i.off).map(i=>inm(i)+(i.q>1?' × '+i.q:'')).join(', ');
 const paidOf=r=>(r.payments||[]).reduce((a,p)=>a+(+p.a||0),0);
 const balOf=r=>SOLD.includes(r.status)?Math.max(0,Math.round(((+r.price||0)-paidOf(r))*100)/100):0;
 const deadline=r=>(r.createdAt||0)+URG[r.urgency&&URG[r.urgency]?r.urgency:'d3'].h*3600000;
@@ -535,10 +543,10 @@ const overdue=r=>PRE.includes(r.status)&&Date.now()>deadline(r);
 function dueTxt(r){if(!PRE.includes(r.status))return'';const ms=deadline(r)-Date.now();if(ms<0)return'<span class="due late">Мӯҳлат гузашт</span>';const h=Math.floor(ms/3600000);return`<span class="due ${h<6?'soon':''}">${h<24?Math.max(1,h)+' соат монд':Math.floor(h/24)+' рӯз монд'}</span>`}
 function custName(r){return r.customerId&&S.users[r.customerId]?S.users[r.customerId].name:(r.customerName||'Муштарӣ')}
 function custPhone(r){return r.customerId&&S.users[r.customerId]?S.users[r.customerId].phone:(r.customerPhone||'')}
-function waText(r){return`1. ${r.car||''}\n2. ${r.year||''}\n3. ${itemsOf(r).filter(i=>!i.off).map(i=>i.n+(i.q>1?' × '+i.q:'')).join('\n   ')}${r.vin?'\nVIN: '+r.vin:''}`}
+function waText(r){return`1. ${r.car||''}\n2. ${r.year||''}\n3. ${itemsOf(r).filter(i=>!i.off).map(i=>inm(i)+(i.q>1?' × '+i.q:'')).join('\n   ')}${r.vin?'\nVIN: '+r.vin:''}`}
 function custMsg(r){
   const n=custName(r),c=r.code;
-  if(r.status==='offered')return`Ассалому алайкум, ${n}!\nДархости №${c} (${r.car}) ёфт шуд:\n${itemsOf(r).filter(i=>!i.off).map(i=>'• '+i.n+(i.q>1?' × '+i.q:'')+(i.price?' — '+money(i.price):'')).join('\n')}\nҶамъ: ${money(r.price)}${r.warrantyDays?'\nКафолат: '+r.warrantyDays+' рӯз':''}\nБарои заказ ба сайт ворид шавед: ${location.origin+location.pathname}\n${C.name}`;
+  if(r.status==='offered')return`Ассалому алайкум, ${n}!\nДархости №${c} (${r.car}) ёфт шуд:\n${itemsOf(r).filter(i=>!i.off).map(i=>'• '+inm(i)+(i.q>1?' × '+i.q:'')+(i.price?' — '+money(i.price):'')).join('\n')}\nҶамъ: ${money(r.price)}${r.warrantyDays?'\nКафолат: '+r.warrantyDays+' рӯз':''}\nБарои заказ ба сайт ворид шавед: ${location.origin+location.pathname}\n${C.name}`;
   if(r.status==='ordered')return`Ассалому алайкум, ${n}! Закази №${c} қабул шуд. Ҷамъ: ${money(r.price)}${balOf(r)?', боқимонда: '+money(balOf(r)):''}.\n${C.name}`;
   if(r.status==='shipped')return`Ассалому алайкум, ${n}! Закази №${c} дар роҳ аст.${r.tracking?' Пайгирӣ: '+r.tracking:''}\n${C.name}`;
   if(r.status==='delivered')return`Ассалому алайкум, ${n}! Закази №${c} тайёр/супорида шуд.${balOf(r)?' Боқимонда: '+money(balOf(r))+'.':''} Ташаккур!\n${C.name}`;
@@ -811,7 +819,7 @@ function customerView(){
     const prog=stg===undefined?`<div><span class="pill k-x">${r.status==='notfound'?'Афсӯс, ёфт нашуд':r.status==='returned'?'Баргардонида шуд':'Бекор шуд'}</span></div>`
       :`<div class="steps">${CSTEPS.map((_,i)=>`<i class="${i<=stg?'on':''}"></i>`).join('')}</div><div class="steps-l">${CSTEPS.map((l,i)=>`<span class="${i===stg?'on':''}">${l}</span>`).join('')}</div>`;
     const its=itemsOf(r),showP=['offered',...SOLD].includes(r.status);
-    const itemsBox=`<div class="items">${its.map((it,i)=>`<div class="it ${it.off?'off':''}"><span class="nm">${esc(it.n)}${it.q>1?' × '+it.q:''}</span><span class="bar">${showP&&it.price?`<span class="price small">${money(it.price)}</span>`:''}${r.status==='offered'&&its.length>1?`<button class="link" data-act="item-off" data-id="${r.id}" data-i="${i}">${it.off?'Бозгардон':'Лозим нест'}</button>`:''}</span></div>`).join('')}${showP?`<div class="sum"><span>Ҷамъ</span><span class="price">${money(r.price)}</span></div>`:''}</div>`;
+    const itemsBox=`<div class="items">${its.map((it,i)=>`<div class="it ${it.off?'off':''}"><span class="nm">${inmH(it)}${it.q>1?' × '+it.q:''}</span><span class="bar">${showP&&it.price?`<span class="price small">${money(it.price)}</span>`:''}${r.status==='offered'&&its.length>1?`<button class="link" data-act="item-off" data-id="${r.id}" data-i="${i}">${it.off?'Бозгардон':'Лозим нест'}</button>`:''}</span></div>`).join('')}${showP?`<div class="sum"><span>Ҷамъ</span><span class="price">${money(r.price)}</span></div>`:''}</div>`;
     const offer=r.status==='offered'?`<div class="offer"><div><div class="small">Қисм ёфт шуд${r.warrantyDays?' · кафолат '+r.warrantyDays+' рӯз':''}</div><div class="price">${money(r.price)}</div>${r.offerNote?`<div class="small">${esc(r.offerNote)}</div>`:''}</div><div class="spacer"></div><button class="btn ok" data-act="cust-accept" data-id="${r.id}">Заказ медиҳам</button><button class="btn bad" data-act="cust-decline" data-id="${r.id}">Лозим нест</button></div>`:'';
     const pay=SOLD.includes(r.status)?`<div class="bal"><div class="ok-b"><span>Пардохт шуд</span><b>${money(paidOf(r))}</b></div><div class="${balOf(r)?'due-b':''}"><span>Боқимонда</span><b>${money(balOf(r))}</b></div>${r.tracking?`<div><span>Пайгирӣ</span><b>${esc(r.tracking)}</b></div>`:''}${r.warrantyDays&&r.deliveredAt?`<div><span>Кафолат то</span><b>${fdate(r.deliveredAt+r.warrantyDays*864e5)}</b></div>`:''}</div>`:'';
     const cancel=['new','assigned'].includes(r.status)?`<div><button class="btn bad" data-act="cust-cancel" data-id="${r.id}">Бекор кардан</button></div>`:'';
@@ -837,14 +845,16 @@ function customerView(){
   return hero+nav+body;
 }
 
+function itemRow(i){return`<div class="irow3"><input id="n-it-${i}" placeholder="${i?'Номи қисм':esc(C.itemPh)}" aria-label="Номи қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"><input id="n-ic-${i}" class="codein" placeholder="Коди қисм (агар бошад)" autocapitalize="characters" spellcheck="false" aria-label="Коди қисм ${i+1}"></div>`}
+function bulkBox(){return S.bulk?`<div class="bulk"><div class="small muted" style="font-weight:600">Ҳар код дар як сатр. Пас аз код номро ҳам навиштан мумкин.</div><textarea id="n-codes" rows="6" placeholder="04465-33450\n90915-YZZD4 филтри равған\n…"></textarea></div>`:''}
 function custReqForm(){
-  const rows=[];for(let i=0;i<S.nItems;i++)rows.push(`<div class="irow"><input id="n-it-${i}" placeholder="${i?'Боз чӣ лозим?':esc(C.itemPh)}" ${i===0?'required':''} aria-label="Қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"></div>`);
+  const rows=[];for(let i=0;i<S.nItems;i++)rows.push(itemRow(i));
   const opt='<span class="opt">ихтиёрӣ</span>';
   return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>
     <label class="big">1. Мошинатон<input id="n-car" required placeholder="${esc(C.f1ph)} 2015" autocomplete="off"></label>
-    <div class="big"><div class="lbl">2. Чӣ лозим?</div><div class="items">${rows.join('')}</div><button type="button" class="link" data-act="additem" style="margin-top:6px">+ Боз як қисм</button></div>
+    <div class="big"><div class="lbl">2. Чӣ лозим?</div><div class="items">${rows.join('')}</div><div class="bar" style="margin-top:6px"><button type="button" class="link" data-act="additem">+ Боз як қисм</button><button type="button" class="link" data-act="bulk">${S.bulk?'− Рӯйхати кодҳоро пӯшидан':'☰ Кодҳои бисёр якбора'}</button></div>${bulkBox()}</div>
     <div class="big"><div class="lbl">3. Акс ${opt}</div><label class="upl wide">${ICON_CAM}Акси қисм ё техпаспорт<input type="file" id="n-photo" accept="image/*" multiple></label> <span class="small muted" id="n-photo-n"></span></div>
-    <details class="more"><summary>Маълумоти иловагӣ ${opt}</summary><div class="grid">
+    <details class="more" id="n-more"><summary>Маълумоти иловагӣ ${opt}</summary><div class="grid">
       <label class="full">${esc(C.f3)}<input id="n-vin" autocapitalize="characters" spellcheck="false" placeholder="${esc(C.f3ph)}" style="font-family:var(--mono)"></label>
       <label class="full">${esc(C.f2)}<input id="n-year" inputmode="numeric" placeholder="${esc(C.f2ph)}"></label>
       <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Нав ё кӯҳна?</div><div class="radio">${Object.entries(COND).map(([k,l])=>`<label><input type="radio" name="n-cond" id="n-cond-${k}" value="${k}" ${k==='any'?'checked':''}>${l}</label>`).join('')}</div></div>
@@ -852,18 +862,18 @@ function custReqForm(){
       <label class="full">Эзоҳ<input id="n-note" placeholder="Ранг, тараф (чап/рост)…"></label>
     </div></details>
     <button class="btn pri block" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button>
-    <div class="small muted" style="text-align:center">Агар акс ё VIN бошад, қисмро зудтар меёбем.</div>
+    <div class="small muted" style="text-align:center">Агар коди қисм, акс ё VIN бошад, қисмро зудтар меёбем.</div>
     ${S.reqs.some(r=>r.customerId===cid())?'<button class="btn block" type="button" data-act="closenew">Бекор</button>':''}</form>`;
 }
 function newReqForm(forAdmin){
   if(!forAdmin)return custReqForm();
-  const rows=[];for(let i=0;i<S.nItems;i++)rows.push(`<div class="irow"><input id="n-it-${i}" placeholder="${i?'Боз як мол/қисм':esc(C.itemPh)}" ${i===0?'required':''} aria-label="Қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"></div>`);
+  const rows=[];for(let i=0;i<S.nItems;i++)rows.push(itemRow(i));
   return`<form class="card" id="f-new"><h2>${forAdmin?'Дархост аз номи муштарӣ':'Дархости нав'}</h2><div class="grid">
     ${forAdmin?`<label>Номи муштарӣ<input id="n-cname" required></label><label>WhatsApp-и муштарӣ<input id="n-cphone" inputmode="tel" placeholder="+971…"></label>`:''}
     <div class="grid2 full"><label>${esc(C.f1)}<input id="n-car" required placeholder="${esc(C.f1ph)}"></label>
     <label>${esc(C.f2)}<input id="n-year" placeholder="${esc(C.f2ph)}"></label></div>
     <label class="full">${esc(C.f3)}${C.f3len?' ('+C.f3len+' рамз)':''}<input id="n-vin" ${C.f3len?'maxlength="'+C.f3len+'"':''} autocapitalize="characters" spellcheck="false" placeholder="${esc(C.f3ph)}" style="font-family:var(--mono)"></label>
-    <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Қисмҳо ва миқдор</div><div class="items">${rows.join('')}</div><div style="margin-top:8px"><button type="button" class="link" data-act="additem">+ Қисми дигар илова кунед</button></div></div>
+    <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Қисмҳо ва миқдор</div><div class="items">${rows.join('')}</div><div class="bar" style="margin-top:8px"><button type="button" class="link" data-act="additem">+ Қисми дигар илова кунед</button><button type="button" class="link" data-act="bulk">${S.bulk?'− Рӯйхати кодҳоро пӯшидан':'☰ Кодҳои бисёр якбора'}</button></div>${bulkBox()}</div>
     <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Акси қисм ё техпаспорт</div><label class="upl">${ICON_CAM}Акс интихоб кунед<input type="file" id="n-photo" accept="image/*" multiple></label> <span class="small muted" id="n-photo-n"></span></div>
     <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Кадом намуд?</div><div class="radio">${Object.entries(COND).map(([k,l],i)=>`<label><input type="radio" name="n-cond" id="n-cond-${k}" value="${k}" ${i===0?'checked':''}>${l}</label>`).join('')}</div></div>
     <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Кай лозим?</div><div class="radio">${Object.entries(URG).map(([k,u])=>`<label><input type="radio" name="n-urg" id="n-urg-${k}" value="${k}" ${k==='d3'?'checked':''}>${u.l}</label>`).join('')}</div></div>
@@ -908,7 +918,7 @@ function sheet(){
   const info=`<dl class="kv"><dt>${esc(C.f1s)}</dt><dd>${esc(r.car)} ${esc(r.year)}</dd><dt>${esc(C.f3)}</dt><dd style="font-family:var(--mono)">${r.vin?esc(r.vin)+(C.f3len&&r.vin.length!==C.f3len?' <span class="warn-note">('+C.f3len+' рамз нест)</span>':''):'<span class="warn-note">нест</span>'}</dd><dt>Намуд</dt><dd>${esc(COND[r.condition]||'—')}</dd><dt>Мӯҳлат</dt><dd>${URG[r.urgency||'d3'].l} · ${fmt(deadline(r))} ${dueTxt(r)}</dd>${r.note?`<dt>Эзоҳ</dt><dd>${esc(r.note)}</dd>`:''}
     ${adm?`<dt>Муштарӣ</dt><dd>${esc(custName(r))} ${custPhone(r)?'· <span style="font-family:var(--mono)">'+esc(custPhone(r))+'</span>':''}</dd>`:''}
     <dt>Масъул</dt><dd>${r.workerId?`<b>${esc(uname(r.workerId))}</b>`:'<span class="who none">таъин нашуд</span>'}${r.assignedAt&&r.foundAt?` · ёфт дар ${hrs((r.foundAt-r.assignedAt)/36e5)}`:''}</dd>${r.workerNote?`<dt>Эзоҳи коргар</dt><dd>${esc(r.workerNote)}</dd>`:''}${r.returnReason?`<dt>Сабаби бозгашт</dt><dd>${esc(r.returnReason)}</dd>`:''}</dl>`;
-  const itemsBox=`<div class="items">${its.map(it=>`<div class="it ${it.off?'off':''}"><span class="nm"><b>${esc(it.n)}</b>${it.q>1?' × '+it.q:''}</span>${adm&&it.price?`<span class="price small">${money(it.price)}</span>`:''}</div>`).join('')}</div>`;
+  const itemsBox=`<div class="items">${its.map(it=>`<div class="it ${it.off?'off':''}"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span>${adm&&it.price?`<span class="price small">${money(it.price)}</span>`:''}</div>`).join('')}</div>`;
   const photos=`<div class="bar">${photosHtml(r)||'<span class="small muted">Акс нест.</span>'}</div>${(adm||isMine)?uplBtn(r.id,'Акс илова кардан'):''}`;
   const mg=adm&&(r.cost||r.price)?`<div class="bal"><div><span>Харид${r.supplier?' · '+esc(r.supplier):''}</span><b>${money(r.cost)}</b></div><div><span>Фурӯш</span><b>${money(r.price)}</b></div>${r.cost&&r.price?`<div class="ok-b"><span>Фоида</span><b>${money(r.price-r.cost)}</b></div>`:''}</div>`:'';
   let act='';
@@ -918,7 +928,7 @@ function sheet(){
     const priceCard=canPrice?`<div class="card pricing"><h3>${r.status==='offered'?'Нарх фиристода шуд — метавонед иваз кунед':'Нархи фурӯш ба муштарӣ'}</h3>
       ${r.cost?`<div class="bal"><div><span>Нархи харид${r.supplier?' · '+esc(r.supplier):''}</span><b>${money(r.cost)}</b></div>${r.workerId?`<div><span>Ёфт</span><b style="font-family:var(--body)">${esc(uname(r.workerId))}</b></div>`:''}</div>`:'<div class="small muted">Нархи харид ҳанӯз нест — метавонед нархро худатон гузоред.</div>'}
       ${r.cost&&live.length===1?`<div class="bar"><span class="small muted">Фоида:</span>${[10,20,30,50].map(p=>`<button class="chip" data-act="markup" data-id="${r.id}" data-v="${p}" style="height:34px">+${p}%</button>`).join('')}</div>`:''}
-      <div class="items">${its.map((it,i)=>it.off?`<div class="it off"><span class="nm">${esc(it.n)}</span><span class="small">муштарӣ рад кард</span></div>`:`<div class="it"><span class="nm"><b>${esc(it.n)}</b>${it.q>1?' × '+it.q:''}</span><input id="d-ip-${r.id}-${i}" data-pp="${r.id}" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Нарх ${esc(C.cur)}" value="${esc(it.price??'')}" aria-label="Нархи ${esc(it.n)}"></div>`).join('')}</div>
+      <div class="items">${its.map((it,i)=>it.off?`<div class="it off"><span class="nm">${inmH(it)}</span><span class="small">муштарӣ рад кард</span></div>`:`<div class="it"><span class="nm"><b>${inmH(it)}</b>${it.q>1?' × '+it.q:''}</span><input id="d-ip-${r.id}-${i}" data-pp="${r.id}" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Нарх ${esc(C.cur)}" value="${esc(it.price??'')}" aria-label="Нархи ${esc(it.n)}"></div>`).join('')}</div>
       <div class="bal"><div><span>Ҷамъ ба муштарӣ</span><b id="pt-${r.id}">—</b></div><div class="ok-b"><span>Фоидаи шумо</span><b id="pp-${r.id}">—</b></div></div>
       <div class="grid"><label>Кафолат (рӯз)<input id="d-war-${r.id}" type="number" min="0" value="${esc(r.warrantyDays||'')}" placeholder="0"></label><label>Эзоҳ ба муштарӣ<input id="d-onote-${r.id}" value="${esc(r.offerNote||'')}" placeholder="Мӯҳлат: 2 рӯз"></label></div>
       <div><button class="btn pri" data-act="offer" data-id="${r.id}">${r.status==='offered'?'Нархи навро ба муштарӣ фиристодан':'Ба муштарӣ фиристодан'}</button></div></div>`:'';
@@ -986,10 +996,12 @@ function render(){
   const files=document.getElementById('n-photo')?.files||null;
   const f=document.activeElement&&document.activeElement.id;
   const sc=app.querySelector('.sheet')?.scrollTop||0;
+  const opn=[...app.querySelectorAll('details[id]')].filter(d=>d.open).map(d=>d.id);
   app.innerHTML=header()+`<main class="wrap">${body()}</main>`+sheet()+(S.lb?`<div class="lb" data-act="lbclose"><img data-pid="${esc(S.lb)}" src="${S.ph[S.lb]||PH_PLACE}" alt="Акс"></div>`:'')+(S.toast?`<div class="toast" role="status">${esc(S.toast)}</div>`:'');
   for(const id in keep){const e=document.getElementById(id);if(!e)continue;if(e.type==='radio'||e.type==='checkbox')e.checked=keep[id];else e.value=keep[id]}
   if(files&&files.length){const e=document.getElementById('n-photo');if(e){try{e.files=files}catch(_){}const n=document.getElementById('n-photo-n');if(n)n.textContent=files.length+' акс интихоб шуд'}}
   const sh=app.querySelector('.sheet');if(sh)sh.scrollTop=sc;
+  opn.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true});
   if(S.open)calcPP(S.open);
   fillPhotos();
   if(f){const e=document.getElementById(f);if(e){e.focus();if(e.id==='q'){const n=e.value.length;try{e.setSelectionRange(n,n)}catch(_){}}}}
@@ -1085,8 +1097,10 @@ document.addEventListener('submit',async e=>{
   if(fid==='f-new'){
     const forAdmin=view()==='admin';
     const car=val('n-car');if(!car)return;
-    const items=[];for(let i=0;i<S.nItems;i++){const n=val('n-it-'+i);if(n)items.push({n,q:Math.max(1,parseInt(val('n-iq-'+i))||1),price:null,off:false})}
-    if(!items.length){toast('Камаш як қисмро нависед');return}
+    const items=[];for(let i=0;i<S.nItems;i++){const n=val('n-it-'+i),code=val('n-ic-'+i).toUpperCase().replace(/\s+/g,' ').trim();if(n||code){const it={n:n||code,q:Math.max(1,parseInt(val('n-iq-'+i))||1),price:null,off:false};if(code)it.code=code;items.push(it)}}
+    const bt=document.getElementById('n-codes');
+    if(bt&&bt.value.trim())bt.value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).slice(0,60).forEach(line=>{const m=line.match(/^(\S+)\s*(.*)$/);const code=m[1].toUpperCase().replace(/,+$/,'');const n=(m[2]||'').trim();items.push({n:n||code,code,q:1,price:null,off:false})});
+    if(!items.length){toast('Номи қисм ё кодашро нависед');return}
     const vin=val('n-vin').toUpperCase().replace(/\s/g,'');
     const fileEl=document.getElementById('n-photo');const files=fileEl?fileEl.files:null;
         const cond=(document.querySelector('input[name="n-cond"]:checked')||{}).value||'any';
@@ -1097,7 +1111,7 @@ document.addEventListener('submit',async e=>{
     if(forAdmin){cname=val('n-cname');const dg=digits(val('n-cphone'));cphone=dg?'+'+dg:'';
       if(dg.length>=7){custId='c-'+dg;if(!S.customers[custId]){try{await setDoc(doc(db,'customers',custId),{name:cname,phone:cphone,createdAt:now})}catch(_){}}}}
     const photos=await uploadFiles(files,forAdmin?'w':'c',ref.id,custId);
-    const d={code:String(now).slice(-6),car,year:val('n-year'),items,parts:items.map(i=>i.n).join(', '),vin,condition:cond,urgency:urg,note:val('n-note'),photos,
+    const d={code:String(now).slice(-6),car,year:val('n-year'),items,parts:items.map(i=>inm(i)).join(', '),vin,condition:cond,urgency:urg,note:val('n-note'),photos,
       status:'new',group:cond==='any'?null:cond,workerId:null,customerId:custId,customerName:cname,customerPhone:cphone,createdAt:now,updatedAt:now,log:[{t:now,by:actor(),s:'Дархост сохта шуд'}]};
     let priv=null;
     if(forAdmin){const man=document.getElementById('n-man');
@@ -1107,8 +1121,8 @@ document.addEventListener('submit',async e=>{
         d.items=items.map((it,i)=>({...it,price:i===0?price:0}));d.status='ordered';d.orderedAt=now;d.offeredAt=now;d.manual=true;d.log.push({t:now,by:actor(),s:'Заказ бе ҷустуҷӯ: '+money(price)});
         priv={quotes:sup||cost?[{id:qid,sup:sup||'—',cost:cost||0,kind:cond==='used'?'used':'orig',by:actor(),t:now}]:[],chosenQ:sup||cost?qid:null,cost:cost||null,supplier:sup,workerId:null,log:[]}}}
     try{await setDoc(ref,d);if(priv)await setDoc(doc(db,'priv',ref.id),priv);
-      S.newReq=false;S.nItems=1;
-      app.querySelectorAll('#f-new input:not([type=radio]):not([type=checkbox])').forEach(x=>{if(x.type==='file'){x.value='';return}x.value=x.type==='number'&&x.id.startsWith('n-iq')?'1':''});
+      S.newReq=false;S.nItems=1;S.bulk=false;
+      app.querySelectorAll('#f-new input:not([type=radio]):not([type=checkbox]),#f-new textarea').forEach(x=>{if(x.type==='file'){x.value='';return}x.value=x.type==='number'&&x.id.startsWith('n-iq')?'1':''});
       S.busy=false;if(!forAdmin)S.cTab='list';toast('Дархост фиристода шуд')}
     catch(err){S.busy=false;toast('Фиристода нашуд: '+errTxt(err))}
   }
@@ -1146,6 +1160,7 @@ document.addEventListener('click',async e=>{
     case'qclose':S.qOpen=null;break;
     case'lb':S.lb=b.dataset.v;break;
     case'lbclose':S.lb=null;break;
+    case'bulk':S.bulk=!S.bulk;render();setTimeout(()=>{const x=document.getElementById('n-codes');if(x)x.focus()},20);return;
     case'additem':S.nItems=Math.min(12,S.nItems+1);render();setTimeout(()=>{const x=document.getElementById('n-it-'+(S.nItems-1));if(x)x.focus()},20);return;
     case'newreq':S.newReq=true;render();setTimeout(()=>{const f=document.getElementById('f-new');if(f){f.scrollIntoView({behavior:'smooth',block:'start'});const i=document.getElementById(view()==='admin'?'n-cname':'n-car');if(i)i.focus({preventScroll:true})}},30);return;
     case'closenew':S.newReq=false;S.nItems=1;break;
