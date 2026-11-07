@@ -1209,20 +1209,23 @@ function codesList(){const el=document.getElementById('n-codes'),box=document.ge
   const {items,notes}=parseCodes(el.value);S.cq=S.cq||{};
   box.innerHTML=items.length?`<div class="cl-h">Ёфт шуд: <b>${items.length}</b> код${notes.length?` · <span class="muted">${notes.length} сатр ҳамчун эзоҳ</span>`:''}</div>${items.map(it=>{const q=S.cq[it.code]||it.q;return`<div class="cl-r"><span class="cl-c"><code class="pc">${esc(it.code)}</code>${it.n?` <span class="small">${esc(it.n)}</span>`:''}</span><span class="stepper"><button type="button" data-cq="-1" data-code="${esc(it.code)}" aria-label="Кам">−</button><input class="cqin" data-code="${esc(it.code)}" type="number" min="1" value="${q}" aria-label="Миқдор"><button type="button" data-cq="1" data-code="${esc(it.code)}" aria-label="Зиёд">+</button></span></div>`}).join('')}`:'<div class="small muted">Кодҳо дар ин ҷо бо миқдорашон пайдо мешаванд.</div>'}
 function bulkBox(){return S.bulk?`<div class="bulk"><div class="small muted" style="font-weight:600">Ҳар код дар як сатр. Пас аз код ном ё миқдорро ҳам навиштан мумкин (масалан: 21810-A9000 2).</div><textarea id="n-codes" rows="6" placeholder="21810-A9000\n90915-YZZD4 филтри равған\n25281-2F001 2"></textarea><div id="codes-list" class="codes-list"></div></div>`:''}
-function custReqForm(){
+function custReqForm(adm){
   const rows=[];for(let i=0;i<S.nItems;i++)rows.push(itemRow(i));
   const opt='<span class="opt">ихтиёрӣ</span>';
   const md=S.fMode==='codes'?'codes':'simple';
   const sw=`<div class="seg mode"><button type="button" data-act="fmode" data-v="simple" class="${md==='simple'?'on':''}">Ном ва акс</button><button type="button" data-act="fmode" data-v="codes" class="${md==='codes'?'on':''}">Танҳо кодҳо</button></div>`;
-  const back=S.reqs.some(r=>r.customerId===cid())?'<button class="btn block" type="button" data-act="closenew">Бекор</button>':'';
-  if(md==='codes')return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>${sw}
+  const back=adm||S.reqs.some(r=>r.customerId===cid())?'<button class="btn block" type="button" data-act="closenew">Бекор</button>':'';
+  const who=adm?`<div class="grid2"><label class="big"><span>Номи муштарӣ</span><input id="n-cname" required></label><label class="big"><span>WhatsApp</span><input id="n-cphone" inputmode="tel" placeholder="+971…"></label></div>`:'';
+  const ttl=adm?'Дархост аз номи муштарӣ':'Дархости нав';
+  const man=adm?`<details class="more" id="n-man-d"><summary>Нарх маълум аст — фавран заказ</summary><div class="grid"><label class="chk full"><input type="checkbox" id="n-man">Бе ҷустуҷӯ, рост заказ шавад</label><label class="full">Паставшик<input id="n-sup"></label><label>Нархи харид (${esc(C.cur)})<input id="n-cost" type="number" step="0.01" min="0"></label><label>Нархи фурӯш (${esc(C.cur)})<input id="n-price" type="number" step="0.01" min="0"></label></div></details>`:'';
+  if(md==='codes')return`<form class="card simple-f" id="f-new"><h2>${ttl}</h2>${sw}${who}
     <div class="big"><div class="lbl">1. Кодҳоро гузоред</div><div class="small muted">Ҳар код дар як сатр. Аз WhatsApp ё Excel нусха гирифта гузоред. Сатрҳои бе код ҳамчун эзоҳ мераванд.</div>
       <textarea id="n-codes" class="codes-ta" rows="7" placeholder="21810-A9000\n21950-A9000\n25281-2F001 2"></textarea></div>
     <div class="big"><div class="lbl">2. Миқдор</div><div id="codes-list" class="codes-list"></div></div>
     <label class="big"><span>3. Мошин ${opt}</span><input id="n-car" placeholder="${esc(C.f1ph)}" autocomplete="off"></label>
     <button class="btn pri block" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button>${back}</form>`;
-  return`<form class="card simple-f" id="f-new"><h2>Дархости нав</h2>${sw}
-    <label class="big">1. Мошинатон<input id="n-car" required placeholder="${esc(C.f1ph)} 2015" autocomplete="off"></label>
+  return`<form class="card simple-f" id="f-new"><h2>${ttl}</h2>${sw}${who}
+    <label class="big">1. ${adm?'Мошин':'Мошинатон'}<input id="n-car" required placeholder="${esc(C.f1ph)} 2015" autocomplete="off"></label>
     <div class="big"><div class="lbl">2. Чӣ лозим?</div><div class="items">${rows.join('')}</div><button type="button" class="link" data-act="additem" style="margin-top:6px">+ Боз як қисм</button></div>
     <div class="big"><div class="lbl">3. Акс ${opt}</div><label class="upl wide">${ICON_CAM}Акси қисм ё техпаспорт<input type="file" id="n-photo" accept="image/*" multiple></label> <span class="small muted" id="n-photo-n"></span></div>
     <details class="more" id="n-more"><summary>Маълумоти иловагӣ ${opt}</summary><div class="grid">
@@ -1232,6 +1235,7 @@ function custReqForm(){
       <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Кай лозим?</div><div class="radio">${Object.entries(URG).map(([k,u])=>`<label><input type="radio" name="n-urg" id="n-urg-${k}" value="${k}" ${k==='d3'?'checked':''}>${u.l}</label>`).join('')}</div></div>
       <label class="full">Эзоҳ<input id="n-note" placeholder="Ранг, тараф (чап/рост)…"></label>
     </div></details>
+    ${man}
     <button class="btn pri block" type="submit" ${S.busy?'disabled':''}>${S.busy?'Фиристода истодааст…':'Фиристодан'}</button>
     <div class="small muted" style="text-align:center">Агар коди қисм, акс ё VIN бошад, қисмро зудтар меёбем.</div>
     ${back}</form>`;
@@ -1239,7 +1243,8 @@ function custReqForm(){
 function newReqForm(forAdmin){
   if(!forAdmin)return custReqForm();
   const md=S.fMode==='codes'?'codes':'simple';
-  const sw=`<div class="seg mode"><button type="button" data-act="fmode" data-v="simple" class="${md==='simple'?'on':''}">Ном ва акс</button><button type="button" data-act="fmode" data-v="codes" class="${md==='codes'?'on':''}">Кодҳо пайдарҳам</button></div>`;
+  if(md==='simple')return custReqForm(true);
+  const sw=`<div class="seg mode"><button type="button" data-act="fmode" data-v="simple" class="${md==='simple'?'on':''}">Ном ва акс</button><button type="button" data-act="fmode" data-v="codes" class="${md==='codes'?'on':''}">Танҳо кодҳо</button></div>`;
   if(md==='codes')return`<form class="card simple-f" id="f-new"><h2>Дархост аз номи муштарӣ</h2>${sw}
     <div class="grid2"><label class="big"><span>Номи муштарӣ</span><input id="n-cname" required></label><label class="big"><span>WhatsApp</span><input id="n-cphone" inputmode="tel" placeholder="+971…"></label></div>
     <div class="big"><div class="lbl">Кодҳо</div><div class="small muted">Ҳар код дар як сатр — пайдарҳам нависед ё аз WhatsApp/Excel гузоред. Пас аз код миқдор: <code class="pc">21810-A9000 2</code></div>
