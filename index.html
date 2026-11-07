@@ -398,6 +398,21 @@ h3{font-size:10.5px}
 .logo.img img{width:100%;height:100%;object-fit:contain;display:block}
 .logo-edit{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .logo-edit .logo{width:64px;height:64px;border-radius:14px;font-size:22px}
+
+/* customer panel */
+.bnav.c3{grid-template-columns:repeat(3,1fr)}
+.hdebt.good{background:rgba(120,220,160,.16);color:#d6f5e3}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+.radio label{padding:6px 10px;font-size:13.5px}
+.ccard{padding:11px 12px;gap:8px;border-radius:12px}
+.ccard .top b{font-size:15px}
+.ccard .items{padding:8px 10px}
+.ccard.is-offer{border-color:color-mix(in srgb,var(--brass) 60%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,var(--brass) 14%,transparent)}
+.offer{padding:10px;gap:8px}
+.offer .price{font-size:20px}
+.steps-l{font-size:10.5px}
+.empty .btn{margin-top:6px}
+.it.off .link{text-decoration:none;opacity:1}
 </style>
 </head>
 <body>
@@ -750,19 +765,34 @@ function customerView(){
     const offer=r.status==='offered'?`<div class="offer"><div><div class="small">Қисм ёфт шуд${r.warrantyDays?' · кафолат '+r.warrantyDays+' рӯз':''}</div><div class="price">${money(r.price)}</div>${r.offerNote?`<div class="small">${esc(r.offerNote)}</div>`:''}</div><div class="spacer"></div><button class="btn ok" data-act="cust-accept" data-id="${r.id}">Заказ медиҳам</button><button class="btn bad" data-act="cust-decline" data-id="${r.id}">Лозим нест</button></div>`:'';
     const pay=SOLD.includes(r.status)?`<div class="bal"><div class="ok-b"><span>Пардохт шуд</span><b>${money(paidOf(r))}</b></div><div class="${balOf(r)?'due-b':''}"><span>Боқимонда</span><b>${money(balOf(r))}</b></div>${r.tracking?`<div><span>Пайгирӣ</span><b>${esc(r.tracking)}</b></div>`:''}${r.warrantyDays&&r.deliveredAt?`<div><span>Кафолат то</span><b>${fdate(r.deliveredAt+r.warrantyDays*864e5)}</b></div>`:''}</div>`:'';
     const cancel=['new','assigned'].includes(r.status)?`<div><button class="btn bad" data-act="cust-cancel" data-id="${r.id}">Бекор кардан</button></div>`:'';
-    return`<div class="ccard"><div class="top"><span class="tag">${esc(r.code)}</span><b>${esc(r.car)} ${esc(r.year)}</b><span class="spacer"></span><span class="time">${ago(r.createdAt)}</span></div>
+    return`<div class="ccard ${r.status==='offered'?'is-offer':''}"><div class="top"><span class="tag">${esc(r.code)}</span><b>${esc(r.car)} ${esc(r.year)}</b><span class="spacer"></span><span class="time">${ago(r.createdAt)}</span></div>
       <div class="small muted">${r.vin?esc(C.f3)+' '+esc(r.vin)+' · ':''}${esc(COND[r.condition]||'')} · мӯҳлат ${URG[r.urgency||'d3'].l}</div>${prog}${itemsBox}${photosHtml(r)}${offer}${pay}${cancel}</div>`;
-  }).join('');
-  return`<div class="bar"><h1>Дархостҳои ман</h1><div class="spacer"></div>${S.newReq?'':'<button class="btn pri" data-act="newreq">+ Дархости нав</button>'}</div>`
-    +(S.newReq||!list.length?newReqForm(false):'')+(list.length?cs:`<div class="empty"><b>Ҳоло дархост нест</b><span class="small">Формаи болоро пур кунед — мо қисмро меёбем ва нархро ҳамин ҷо мебинед.</span></div>`);
+  });
+  const offers=list.filter(r=>r.status==='offered');
+  const tab=S.cTab||(offers.length?'offers':list.length?'list':'new');
+  const me=S.users[cid()]||{};const debt=list.reduce((a,r)=>a+balOf(r),0);
+  const card=r=>cs[list.indexOf(r)];
+  const k=(v,ic,label,val)=>`<button class="hk ${tab===v?'on':''}" data-act="ctab" data-v="${v}"><span class="hi">${IC(ICONS[ic],18)}</span><b>${val}</b><span class="hl">${label}</span></button>`;
+  const hero=`<section class="hero"><div class="hero-top"><div><div class="hello">${hello()}${me.name?', '+esc(me.name.split(' ')[0]):''}</div><div class="hdate">${todayTxt()}</div></div></div>
+    <div class="hkpis">${k('list','work','Дар ҷустуҷӯ',list.filter(r=>['new','assigned','searching','found'].includes(r.status)).length)}${k('offers','profit','Нарх омад',offers.length)}${k('list','sold','Заказҳо',list.filter(r=>SOLD.includes(r.status)).length)}${k('list','debt','Қарз',debt?num(debt):'0')}</div>
+    ${offers.length&&tab!=='offers'?`<button class="hdebt good" data-act="ctab" data-v="offers"><span>Барои ${offers.length} дархост нарх омад</span><b>Дидан</b><span>→</span></button>`:''}</section>`;
+  const T=[['offers','Нархҳо'],['list','Дархостҳо'],['new','Дархости нав']];
+  const TI={offers:ICONS.profit,list:ICONS.req,new:'<path d="M12 5v14M5 12h14"/>'};
+  const nav=`<div class="tabs top-tabs">${T.map(([key,l])=>`<button class="${tab===key?'on':''}" data-act="ctab" data-v="${key}">${l}${key==='offers'&&offers.length?`<span class="badge">${offers.length}</span>`:''}</button>`).join('')}</div>
+    <nav class="bnav c3" aria-label="Менюи муштарӣ">${T.map(([key,l])=>`<button class="${tab===key?'on':''}" data-act="ctab" data-v="${key}">${IC(TI[key],22)}<span>${l}</span>${key==='offers'&&offers.length?`<i class="bdot">${offers.length}</i>`:''}</button>`).join('')}</nav>`;
+  let body;
+  if(tab==='new')body=newReqForm(false);
+  else if(tab==='offers')body=offers.length?`<div class="small muted">Роҳбар нарх фиристод. Қисмҳои лозимаро интихоб кунед ва «Заказ медиҳам»-ро пахш кунед.</div>`+offers.map(card).join(''):`<div class="empty"><b>Ҳоло нарх нест</b><span class="small">Вақте роҳбар барои дархостатон нарх фиристад, он дар ҳамин ҷо пайдо мешавад.</span><button class="btn pri" data-act="ctab" data-v="new">+ Дархости нав</button></div>`;
+  else body=list.length?cs.join(''):`<div class="empty"><b>Ҳоло дархост нест</b><span class="small">Дархости аввалро фиристед — мо қисмро меёбем ва нархро ҳамин ҷо мебинед.</span><button class="btn pri" data-act="ctab" data-v="new">+ Дархости нав</button></div>`;
+  return hero+nav+body;
 }
 
 function newReqForm(forAdmin){
   const rows=[];for(let i=0;i<S.nItems;i++)rows.push(`<div class="irow"><input id="n-it-${i}" placeholder="${i?'Боз як мол/қисм':esc(C.itemPh)}" ${i===0?'required':''} aria-label="Қисм ${i+1}"><input id="n-iq-${i}" type="number" min="1" value="1" aria-label="Миқдор"></div>`);
   return`<form class="card" id="f-new"><h2>${forAdmin?'Дархост аз номи муштарӣ':'Дархости нав'}</h2><div class="grid">
     ${forAdmin?`<label>Номи муштарӣ<input id="n-cname" required></label><label>WhatsApp-и муштарӣ<input id="n-cphone" inputmode="tel" placeholder="+971…"></label>`:''}
-    <label>${esc(C.f1)}<input id="n-car" required placeholder="${esc(C.f1ph)}"></label>
-    <label>${esc(C.f2)}<input id="n-year" placeholder="${esc(C.f2ph)}"></label>
+    <div class="grid2 full"><label>${esc(C.f1)}<input id="n-car" required placeholder="${esc(C.f1ph)}"></label>
+    <label>${esc(C.f2)}<input id="n-year" placeholder="${esc(C.f2ph)}"></label></div>
     <label class="full">${esc(C.f3)}${C.f3len?' ('+C.f3len+' рамз)':''}<input id="n-vin" ${C.f3len?'maxlength="'+C.f3len+'"':''} autocapitalize="characters" spellcheck="false" placeholder="${esc(C.f3ph)}" style="font-family:var(--mono)"></label>
     <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Қисмҳо ва миқдор</div><div class="items">${rows.join('')}</div><div style="margin-top:8px"><button type="button" class="link" data-act="additem">+ Қисми дигар илова кунед</button></div></div>
     <div class="full"><div class="small muted" style="margin-bottom:5px;font-weight:600">Акси қисм ё техпаспорт</div><label class="upl">${ICON_CAM}Акс интихоб кунед<input type="file" id="n-photo" accept="image/*" multiple></label> <span class="small muted" id="n-photo-n"></span></div>
@@ -994,7 +1024,7 @@ document.addEventListener('submit',async e=>{
     try{await setDoc(ref,d);if(priv)await setDoc(doc(db,'priv',ref.id),priv);
       S.newReq=false;S.nItems=1;
       app.querySelectorAll('#f-new input:not([type=radio]):not([type=checkbox])').forEach(x=>{if(x.type==='file'){x.value='';return}x.value=x.type==='number'&&x.id.startsWith('n-iq')?'1':''});
-      S.busy=false;toast('Дархост фиристода шуд')}
+      S.busy=false;if(!forAdmin)S.cTab='list';toast('Дархост фиристода шуд')}
     catch(err){S.busy=false;toast('Фиристода нашуд: '+errTxt(err))}
   }
 });
@@ -1025,6 +1055,7 @@ document.addEventListener('click',async e=>{
     case'wt':S.wTab=b.dataset.v;break;
     case'open':S.open=id;S.confirmDel=null;break;
     case'close':S.open=null;S.qOpen=null;break;
+    case'ctab':S.cTab=b.dataset.v;render();scrollTo(0,0);return;
     case'qopen':S.qOpen=id;render();setTimeout(()=>{const x=document.getElementById('q-sup-'+id);if(x)x.focus()},20);return;
     case'qclose':S.qOpen=null;break;
     case'lb':S.lb=b.dataset.v;break;
