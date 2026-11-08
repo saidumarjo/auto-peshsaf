@@ -1179,7 +1179,8 @@ function debtView(){
 }
 function settingsView(){
   const inp=(id,label,v,extra)=>`<label>${label}<input id="s-${id}" value="${esc(v??'')}" ${extra||''}></label>`;
-  return`<form class="card" id="f-set"><h2>Ширкат</h2>
+  return`<div class="card"><h3>Нусхаи эҳтиётӣ</h3><div class="small muted">Ҳамаи дархостҳо, нархҳо, муштариён, коргарон ва танзимотро ҳамчун як файл (JSON) ба телефон ё компютер нигоҳ доред. Ҳар моҳ як бор кардан беҳтар аст. Аксҳо дар файл нестанд.</div><div><button class="btn pri" data-act="backup">⬇ Нусхаи эҳтиётӣ гирифтан</button></div>${S.lastBackup?`<div class="small" style="color:var(--ok)">✓ Охирин: ${fmt(S.lastBackup)}</div>`:''}</div>
+  <form class="card" id="f-set"><h2>Ширкат</h2>
     <div class="logo-edit">${logoHtml()}<div class="bar"><label class="upl">${IC('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/>',16)}${C.logo?'Логотипро иваз кардан':'Логотип гузоштан'}<input type="file" id="s-logo" accept="image/png,image/jpeg,image/webp"></label>${C.logo?'<button type="button" class="btn bad" data-act="logodel">Нест кардан</button>':''}</div>
     <div class="small muted">Расми мураббаъ беҳтар аст (PNG ё JPG). Логотип дар сарлавҳа ва саҳифаи воридшавӣ дида мешавад.</div></div>
     <div class="grid">
@@ -1747,6 +1748,8 @@ document.addEventListener('click',async e=>{
       if(before===after){render();return}
       await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
+    case'backup':{try{const data={app:'auto-peshsaf',at:new Date().toISOString(),settings:C,requests:S.rawReqs,priv:S.privs,customers:S.customers,workers:S.workers||{},users:S.users||{},admins:S.admins||{}};
+      const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const d=new Date();a.download='backup-'+(C.name||'app').replace(/\W+/g,'_')+'-'+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);S.lastBackup=Date.now();toast('Файл нигоҳ дошта шуд: '+a.download)}catch(err){toast('Хато: '+err.message)}break}
     case'sentcust':if(r)upd(id,{sentToCustAt:Date.now()},'Ба муштарӣ фиристода шуд (WhatsApp)',true);return;
     case'shipinfo':{if(!r)return;const kg=fnum('a-kg-'+id),dd=val('a-dd-'+id);await upd(id,{weight:kg||0,deliverBy:dd?new Date(dd+'T12:00').getTime():null},'Карго: '+(kg||0)+' кг'+(dd?' · то '+dd:''));return}
     case'custseg':S.custSeg=b.dataset.v;break;
