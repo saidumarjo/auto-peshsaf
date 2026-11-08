@@ -1,9 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, EmailAuthProvider, linkWithCredential, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* ===== settings ===== */
 const firebaseConfig={apiKey:"AIzaSyCCdRRGhApVy5xESVmCrVYUJdNo1cszPCc",authDomain:"auto-peshsaf.firebaseapp.com",projectId:"auto-peshsaf",storageBucket:"auto-peshsaf.firebasestorage.app",messagingSenderId:"923283036748",appId:"1:923283036748:web:869dabd7e3913cf974b2e9"};
+const IN_WV=(()=>{try{return /; wv\)|Version\/[\d.]+ Chrome\/[\d.]+ Mobile Safari/.test(navigator.userAgent)&&/Android/.test(navigator.userAgent)}catch(_){return false}})();
 const ADMIN_EMAILS=["umar.safaroov@gmail.com"];           // роҳбарон (почтаи Google)
 const WORKER_DOMAIN="workers.auto-peshsaf.app";            // почтаи сохтагӣ барои логини коргар
 
@@ -453,7 +454,9 @@ function debtView(){
 }
 function settingsView(){
   const inp=(id,label,v,extra)=>`<label>${label}<input id="s-${id}" value="${esc(v??'')}" ${extra||''}></label>`;
-  return`<div class="card"><h3>Нусхаи эҳтиётӣ</h3><div class="small muted">Ҳамаи дархостҳо, нархҳо, муштариён, коргарон ва танзимотро ҳамчун як файл (JSON) ба телефон ё компютер нигоҳ доред. Ҳар моҳ як бор кардан беҳтар аст. Аксҳо дар файл нестанд.</div><div><button class="btn pri" data-act="backup">⬇ Нусхаи эҳтиётӣ гирифтан</button></div>${S.lastBackup?`<div class="small" style="color:var(--ok)">✓ Охирин: ${fmt(S.lastBackup)}</div>`:''}</div>
+  const u0=auth.currentUser,hasPw=S.hasPw||!!(u0&&u0.providerData.some(p=>p.providerId==='password'));
+  const pwCard=u0&&u0.email&&!u0.email.endsWith('@'+WORKER_DOMAIN)?`<form class="card" id="f-apw"><h3>Парол барои барнома (APK)</h3><div class="small muted">Дар барномаи Android «Ворид бо Google» кор намекунад. Дар ин ҷо парол созед ва дар барнома бо <b>${esc(u0.email)}</b> ва ҳамин парол ворид шавед.${hasPw?' <b style="color:var(--ok)">Парол аллакай ҳаст</b> — метавонед иваз кунед.':''}</div><div class="grid"><label>Пароли нав<input id="ap-1" type="password" autocomplete="new-password" minlength="6" required></label><label>Боз як бор<input id="ap-2" type="password" autocomplete="new-password" minlength="6" required></label></div><div><button class="btn pri" type="submit">${hasPw?'Паролро иваз кардан':'Парол сохтан'}</button></div></form>`:'';
+  return pwCard+`<div class="card"><h3>Нусхаи эҳтиётӣ</h3><div class="small muted">Ҳамаи дархостҳо, нархҳо, муштариён, коргарон ва танзимотро ҳамчун як файл (JSON) ба телефон ё компютер нигоҳ доред. Ҳар моҳ як бор кардан беҳтар аст. Аксҳо дар файл нестанд.</div><div><button class="btn pri" data-act="backup">⬇ Нусхаи эҳтиётӣ гирифтан</button></div>${S.lastBackup?`<div class="small" style="color:var(--ok)">✓ Охирин: ${fmt(S.lastBackup)}</div>`:''}</div>
   <form class="card" id="f-set"><h2>Ширкат</h2>
     <div class="logo-edit">${logoHtml()}<div class="bar"><label class="upl">${IC('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/>',16)}${C.logo?'Логотипро иваз кардан':'Логотип гузоштан'}<input type="file" id="s-logo" accept="image/png,image/jpeg,image/webp"></label>${C.logo?'<button type="button" class="btn bad" data-act="logodel">Нест кардан</button>':''}</div>
     <div class="small muted">Расми мураббаъ беҳтар аст (PNG ё JPG). Логотип дар сарлавҳа ва саҳифаи воридшавӣ дида мешавад.</div></div>
@@ -649,7 +652,8 @@ function onboardView(){
     <label>Парол<div class="pw"><input id="l-pass" type="${S.showPw?'text':'password'}" autocomplete="current-password" required><button type="button" class="link" data-act="showpw">${S.showPw?'Пинҳон':'Нишон деҳ'}</button></div></label>
     ${err}<button class="btn pri" type="submit" ${S.busy?'disabled':''}>${S.busy?'Ворид шуда истодааст…':'Ворид шудан'}</button></form></div>`;
   if(t==='admin')return`<div class="login">${head('Воридшавии роҳбар','Бо ҳисоби Google-и роҳбар ворид шавед.')}${seg}
-    <div class="card">${err}<button class="btn pri" data-act="google" ${S.busy?'disabled':''}><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Бо Google ворид шудан</button></div></div>`;
+    ${IN_WV?`<div class="card"><div class="note">Дар барнома (APK) «Ворид бо Google» кор намекунад — Google инро манъ кардааст. Бо Gmail ва пароли худ ворид шавед. Паролро як бор дар Chrome месозед: сайт → ⚙ Танзимот → «Парол барои барнома».</div></div>`:`<div class="card">${S.aPw?'':err}<button class="btn pri" data-act="google" ${S.busy?'disabled':''}><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Бо Google ворид шудан</button></div>`}
+    <form class="card" id="f-alogin"><div class="small" style="font-weight:700">${IN_WV?'Ворид бо Gmail ва парол':'Ё бо Gmail ва парол'}</div><label>Gmail<input id="a-email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></label><label>Парол<input id="a-pass" type="password" autocomplete="current-password" required></label>${S.aPw||IN_WV?err:''}<button class="btn ${IN_WV?'pri':''}" type="submit" ${S.busy?'disabled':''}>Ворид шудан</button></form></div>`;
   return`<div class="login">${head('Воридшавии муштарӣ','Ном ва рақами WhatsApp-и худро нависед. Бори дигар бо ҳамин рақам ворид шавед — дархостҳоятон ҳамин ҷо мемонанд.')}${seg}
     <form class="card" id="f-clogin"><label>Ном<input id="o-name" required autocomplete="name"></label>
     <label>Рақами WhatsApp<input id="o-phone" inputmode="tel" required autocomplete="tel" placeholder="+971 50 123 4567"></label>
@@ -938,6 +942,13 @@ document.addEventListener('submit',async e=>{
     try{await setDoc(doc(db,'settings','app'),d);S.busy=false;toast('Танзимот сабт шуд')}catch(err){S.busy=false;toast('Сабт нашуд: '+errTxt(err))}
     return;
   }
+  if(fid==='f-alogin'){const em=val('a-email').toLowerCase(),pw=document.getElementById('a-pass').value;S.busy=true;S.loginErr='';S.aPw=true;render();
+    try{S.justLogged=true;await signInWithEmailAndPassword(auth,em,pw)}catch(err){const c=err.code||'';S.loginErr=c.includes('invalid')||c.includes('wrong')||c.includes('not-found')?'Gmail ё парол нодуруст. Паролро аввал дар Chrome дар ⚙ Танзимот созед.':c.includes('too-many')?'Кӯшиш зиёд шуд. Каме интизор шавед.':'Ворид шуда нашуд: '+(c||'хато')}
+    S.busy=false;render();return}
+  if(fid==='f-apw'){const p1=document.getElementById('ap-1').value,p2v=document.getElementById('ap-2').value;if(p1.length<6){toast('Парол камаш 6 рамз');return}if(p1!==p2v){toast('Паролҳо якхел нестанд');return}
+    const u=auth.currentUser;if(!u||!u.email){toast('Аввал бо Google ворид шавед');return}
+    try{if(u.providerData.some(p=>p.providerId==='password'))await updatePassword(u,p1);else await linkWithCredential(u,EmailAuthProvider.credential(u.email,p1));S.hasPw=true;toast('Парол сабт шуд. Дар барнома бо '+u.email+' ворид шавед.');render()}
+    catch(err){const c=err.code||'';toast(c.includes('requires-recent-login')?'Барои амният аз сайт бароед, бо Google дубора ворид шавед ва боз кӯшиш кунед.':'Сабт нашуд: '+(c||err.message))}return}
   if(fid==='f-new'){
     const forAdmin=view()==='admin';
     const codesMode=S.fMode==='codes';
@@ -1052,8 +1063,7 @@ document.addEventListener('click',async e=>{
     case'showpw':S.showPw=!S.showPw;break;
     case'google':{S.busy=true;S.loginErr='';render();const prov=new GoogleAuthProvider();
       try{S.justLogged=true;await signInWithPopup(auth,prov)}catch(err){const c=err.code||'';
-        if(c.includes('popup-blocked')||c.includes('operation-not-supported')||c.includes('popup-closed')&&false){try{await signInWithRedirect(auth,prov);return}catch(_){}}
-        S.loginErr=c.includes('unauthorized-domain')?'Ин суроға дар Firebase иҷозат надорад (Authorized domains).':c.includes('popup-closed')?'Равзана пӯшида шуд. Боз кӯшиш кунед.':'Ворид шуда нашуд: '+(c||'хато')}
+        S.loginErr=c.includes('unauthorized-domain')?'Ин суроға дар Firebase иҷозат надорад (Authorized domains).':c.includes('popup-closed')?'Равзана пӯшида шуд. Боз кӯшиш кунед.':c.includes('popup-blocked')||c.includes('operation-not-supported')?'Ин браузер равзанаи Google-ро намекушояд. Сайтро дар Chrome кушоед ё бо Gmail ва парол ворид шавед.':'Ворид шуда нашуд: '+(c||'хато')}S.aPw=false;
       S.busy=false;render();return}
     case'logout':{await logAct('logout');clearInterval(beat);S.custLogged=false;const wasW=!!S.wid;S.open=null;S.newReq=false;S.denied=null;S.entryTab=wasW?'worker':S.isAdmin?'admin':'customer';await signOut(auth).catch(()=>{});return}
     case'cred':S.credFor=b.dataset.v||null;break;
@@ -1192,7 +1202,7 @@ async function startCustomer(cidv){
 /* ===== auth ===== */
 render();
 onSnapshot(doc(db,'settings','app'),s=>{applyCfg(s.exists()?s.data():null);render()},()=>{});
-getRedirectResult(auth).catch(()=>{});
+
 onAuthStateChanged(auth,async user=>{
   S.isAdmin=false;S.isOwner=false;S.wid=null;S.cid=null;S.denied=null;S.view=null;
   if(!user){stopAll();S.authReady=true;S.ready=true;rebuild();render();return}
