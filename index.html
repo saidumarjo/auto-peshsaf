@@ -725,7 +725,7 @@ details.rpanel[open] .rp-tg::after{transform:rotate(-135deg) translateY(-1px)}
 <div id="app"></div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, EmailAuthProvider, linkWithCredential, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, EmailAuthProvider, linkWithCredential, updatePassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* ===== settings ===== */
@@ -1016,8 +1016,8 @@ function adminView(){
   if(S.adminTab==='users')return tabs+usersView();
   if(S.adminTab==='set')return tabs+settingsView();
   if(S.adminTab==='rep')return tabs+reportView();
-  if(S.adminTab==='cust')return tabs+custView();
-  if(S.adminTab==='inv')return tabs+invListView();
+  if(S.adminTab==='cust')return tabs+admBanner()+custView();
+  if(S.adminTab==='inv')return tabs+admBanner()+invListView();
   let base=S.reqs.filter(matchQ);
   if(S.fGroup!=='all')base=base.filter(r=>S.fGroup==='none'?!r.group:r.group===S.fGroup);
   if(S.fWorker==='none')base=base.filter(r=>!r.workerId);else if(S.fWorker!=='all')base=base.filter(r=>r.workerId===S.fWorker);
@@ -1042,7 +1042,7 @@ function adminView(){
     <div class="rp-f">${pickBtn('Масъул',S.fWorker==='all'?'Ҳамаи коргарон':S.fWorker==='none'?'Бе масъул':uname(S.fWorker),'worker',S.fWorker!=='all')}${pickBtn('Гурӯҳ',GOPTS().find(x=>x[0]===S.fGroup)?.[1]||'Ҳама гурӯҳҳо','group',S.fGroup!=='all')}</div>
     <div class="rp-chips">${chips.map(([k,l,n,kk])=>`<button class="st ${S.fStatus===k?'on':''} ${kk||''}" data-act="fs" data-v="${k}"><i></i>${esc(l)}<b>${n}</b></button>`).join('')}</div>
     ${w.length?'':'<div class="note">Коргар нест. Дар қисми <b>Одамон</b> коргаронро бо логин ва парол илова кунед.</div>'}</div></details>`;
-  return tabs+kpis()+alert+wsel+(S.newReq?newReqForm(true):'')+panel+`<div id="list-anchor"></div>`+cards(list,true)+`<button class="fab" data-act="newreq" aria-label="Дархости нав">+</button>`;
+  return tabs+admBanner()+kpis()+alert+wsel+(S.newReq?newReqForm(true):'')+panel+`<div id="list-anchor"></div>`+cards(list,true)+`<button class="fab" data-act="newreq" aria-label="Дархости нав">+</button>`;
 }
 const GOPTS=()=>[['all','Ҳама гурӯҳҳо'],['new',C.g1||'Нав'],['used',C.g2||'Кӯҳна'],['none','Бе гурӯҳ']];
 function pickBtn(lbl,cur,k,on){return`<button class="pickb ${on?'on':''}" data-act="pick" data-v="${k}"><small>${lbl}</small><span>${esc(cur)}</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>`}
@@ -1135,6 +1135,11 @@ function custGroups(){
   Object.entries(S.customers||{}).forEach(([id,c])=>{g[id]={id,name:c.name||'—',phone:c.phone||'',since:c.createdAt||0,rs:[]}});
   S.reqs.forEach(r=>{const k=ckey(r);const x=g[k]||(g[k]={id:k,name:custName(r)||'—',phone:custPhone(r)||'',since:r.createdAt||0,rs:[]});x.rs.push(r)});
   return Object.values(g).map(x=>{const sold=x.rs.filter(r=>SOLD.includes(r.status));return{...x,n:x.rs.length,sold:sold.length,sum:sold.reduce((a,r)=>a+(+r.price||0),0),debt:x.rs.reduce((a,r)=>a+balOf(r),0),last:Math.max(x.since||0,...x.rs.map(r=>r.updatedAt||r.createdAt||0))}});
+}
+function admBanner(){
+  if(!S.subErr)return'';const u=auth.currentUser,unv=u&&!u.emailVerified&&!u.isAnonymous;
+  if(S.subErr.includes('permission')&&unv)return`<div class="card alert bad-a" style="flex-direction:column;align-items:stretch;gap:8px"><b>Маълумот нишон дода намешавад: почтаи ${esc(u.email)} тасдиқ нашудааст.</b><div class="small">Firebase маълумотро танҳо ба роҳбари почтааш тасдиқшуда медиҳад. Тугмаро пахш кунед → ба Gmail мактуб меояд → пайвандро дар он пахш кунед → аз барнома бароед ва дубора ворид шавед.</div><div><button class="btn pri" data-act="verifymail">✉ Мактуби тасдиқ фиристодан</button></div>${S.verSent?'<div class="small">✓ Мактуб фиристода шуд. Gmail-ро санҷед (папкаи Spam ҳам).</div>':''}</div>`;
+  return`<div class="card alert bad-a"><b>Маълумот бор нашуд (${esc(S.subErr)}).</b> <span class="small">${S.subErr.includes('permission')?'Қоидаҳои Firebase ё ҳуқуқи ин ҳисобро санҷед.':'Интернетро санҷед.'}</span></div>`;
 }
 function custView(){
   const seg=S.custSeg||'all';
@@ -1759,6 +1764,7 @@ document.addEventListener('click',async e=>{
       if(before===after){render();return}
       await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
+    case'verifymail':{const u=auth.currentUser;if(!u)return;try{await sendEmailVerification(u);S.verSent=true;toast('Мактуб ба '+u.email+' фиристода шуд')}catch(err){toast('Фиристода нашуд: '+errTxt(err))}break}
     case'backup':{try{const data={app:'auto-peshsaf',at:new Date().toISOString(),settings:C,requests:S.rawReqs,priv:S.privs,customers:S.customers,workers:S.workers||{},users:S.users||{},admins:S.admins||{}};
       const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const d=new Date();a.download='backup-'+(C.name||'app').replace(/\W+/g,'_')+'-'+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);S.lastBackup=Date.now();toast('Файл нигоҳ дошта шуд: '+a.download)}catch(err){toast('Хато: '+err.message)}break}
     case'sentcust':if(r)upd(id,{sentToCustAt:Date.now()},'Ба муштарӣ фиристода шуд (WhatsApp)',true);return;
@@ -1894,8 +1900,8 @@ document.addEventListener('visibilitychange',()=>{if(!meInfo())return;
   else if(hiddenAt&&Date.now()-hiddenAt>60000){logAct('open')}else if(hiddenAt){const m=meInfo();setDoc(doc(db,'presence',m.id.replace(/[\/]/g,'_')),{lastSeen:Date.now(),online:true},{merge:true}).catch(()=>{})}});
 
 /* ===== data subscriptions ===== */
-function stopAll(){unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={};S.extra={};S.extraO={};S.privsO={};S.privs={};S.workers={};S.customers={}}
-function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);if(fn.fail)fn.fail();if(!sub.warned){sub.warned=true;toast('Қисме аз маълумот бор нашуд ('+errTxt(err)+'). Қоидаҳои Firebase-ро санҷед.')}}))}
+function stopAll(){S.subErr=null;sub.warned=false;unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];S.rawReqs={};S.extra={};S.extraO={};S.privsO={};S.privs={};S.workers={};S.customers={}}
+function sub(q,fn,label){unsubs.push(onSnapshot(q,fn,err=>{console.warn(label,err);S.subErr=(err&&err.code)||'error';if(fn.fail)fn.fail();if(!sub.warned){sub.warned=true;toast('Қисме аз маълумот бор нашуд ('+errTxt(err)+'). Қоидаҳои Firebase-ро санҷед.')}}))}
 function waitAll(n){let left=n;S.ready=false;const t=setTimeout(()=>{S.slow=true;render()},10000);return()=>{if(--left<=0){clearTimeout(t);S.ready=true;S.slow=false}rebuild();render()}}
 function startAdmin(){
   stopAll();const done=waitAll(5);
