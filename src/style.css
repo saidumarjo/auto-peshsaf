@@ -707,3 +707,22 @@ details.rpanel[open] .rp-tg::after{transform:rotate(-135deg) translateY(-1px)}
   .bplus:active span{transform:translateY(-12px) scale(.96)}
   body:has(.bnav.c6) .fab{display:none!important}
 }
+
+/* settings menu */
+.set-wrap{display:flex;flex-direction:column;gap:10px}
+.set-prof{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+.set-prof .logo{width:56px;height:56px;font-size:20px;flex:none}
+.set-prof b{display:block;font:700 18px var(--display)}
+.set-prof small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.set-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;color:var(--ink);font:inherit;cursor:pointer}
+.set-row:active{background:var(--surface2)}
+.set-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--surface2);font-size:22px;flex:none}
+.set-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.set-t b{font-size:16.5px}
+.set-t small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.set-ch{font-size:28px;line-height:1;color:var(--brass);font-weight:300}
+.set-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin-bottom:2px}
+.set-top h2{text-align:center;margin:0;font-size:18px}
+.set-back{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;cursor:pointer}
+.ssec[hidden]{display:none!important}
+.ssec{display:flex;flex-direction:column;gap:12px}

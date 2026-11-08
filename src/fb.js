@@ -461,23 +461,35 @@ function settingsView(){
   const inp=(id,label,v,extra)=>`<label>${label}<input id="s-${id}" value="${esc(v??'')}" ${extra||''}></label>`;
   const u0=auth.currentUser,hasPw=S.hasPw||!!(u0&&u0.providerData.some(p=>p.providerId==='password'));
   const pwCard=u0&&u0.email&&!u0.email.endsWith('@'+WORKER_DOMAIN)?`<form class="card" id="f-apw"><h3>Парол барои барнома (APK)</h3><div class="small muted">Дар барномаи Android «Ворид бо Google» кор намекунад. Дар ин ҷо парол созед ва дар барнома бо <b>${esc(u0.email)}</b> ва ҳамин парол ворид шавед.${hasPw?' <b style="color:var(--ok)">Парол аллакай ҳаст</b> — метавонед иваз кунед.':''}</div><div class="grid"><label>Пароли нав<input id="ap-1" type="password" autocomplete="new-password" minlength="6" required></label><label>Боз як бор<input id="ap-2" type="password" autocomplete="new-password" minlength="6" required></label></div><div><button class="btn pri" type="submit">${hasPw?'Паролро иваз кардан':'Парол сохтан'}</button></div></form>`:'';
-  return pwCard+`<div class="card"><h3>Нусхаи эҳтиётӣ</h3><div class="small muted">Ҳамаи дархостҳо, нархҳо, муштариён, коргарон ва танзимотро ҳамчун як файл (JSON) ба телефон ё компютер нигоҳ доред. Ҳар моҳ як бор кардан беҳтар аст. Аксҳо дар файл нестанд.</div><div><button class="btn pri" data-act="backup">⬇ Нусхаи эҳтиётӣ гирифтан</button></div>${S.lastBackup?`<div class="small" style="color:var(--ok)">✓ Охирин: ${fmt(S.lastBackup)}</div>`:''}</div>
-  <form class="card" id="f-set"><h2>Ширкат</h2>
+  const sec=S.setSec||'';
+  const rows=[pwCard?['pw','🔐','Парол барои барнома (APK)',hasPw?'Парол ҳаст':'Парол нест']:null,['backup','☁️','Нусхаи эҳтиётӣ',S.lastBackup?'Охирин: '+fmt(S.lastBackup):'Файли JSON'],['company','🏢','Ширкат ва логотип',C.name],['fields','🧩','Соҳа ва майдонҳо',(PRESETS[C.industry]||{}).label||''],['groups','👥','Гурӯҳҳо',C.g1+' · '+C.g2],['cur','💱','Асъор ва VAT',C.cur+(C.cur2?' · '+C.cur2:'')+' · VAT '+(C.vat??5)+'%'],['about','ℹ️','Дар бораи барнома','']].filter(Boolean);
+  if(!sec)return`<div class="set-wrap"><div class="set-prof">${logoHtml()}<div><b>${esc(C.name)}</b><small>${esc(u0&&u0.email||'')}${C.phone?' · '+esc(C.phone):''}</small></div></div>
+    ${rows.map(([k,ic,t,sub])=>`<button class="set-row" data-act="setsec" data-v="${k}"><span class="set-ic">${ic}</span><span class="set-t"><b>${t}</b>${sub?`<small>${esc(sub)}</small>`:''}</span><span class="set-ch">›</span></button>`).join('')}</div>`;
+  const cur=rows.find(r=>r[0]===sec)||['','','Танзимот'];
+  const top=`<div class="set-top"><button class="set-back" data-act="setsec" data-v="" aria-label="Ба қафо">←</button><h2>${cur[2]}</h2><span></span></div>`;
+  if(sec==='pw')return top+pwCard;
+  if(sec==='backup')return top+`<div class="card"><h3>Нусхаи эҳтиётӣ</h3><div class="small muted">Ҳамаи дархостҳо, нархҳо, муштариён, коргарон ва танзимотро ҳамчун як файл (JSON) ба телефон ё компютер нигоҳ доред. Ҳар моҳ як бор кардан беҳтар аст. Аксҳо дар файл нестанд.</div><div><button class="btn pri" data-act="backup">⬇ Нусхаи эҳтиётӣ гирифтан</button></div>${S.lastBackup?`<div class="small" style="color:var(--ok)">✓ Охирин: ${fmt(S.lastBackup)}</div>`:''}</div>`;
+  if(sec==='about')return top+`<div class="card"><div class="note">Ин сайтро ширкатҳои дигар ҳам метавонанд истифода баранд: ҳар кас нусхаи худро бо Firebase-и худ мегирад ва дар ҳамин саҳифа ному соҳаи худро мегузорад.</div><div class="small muted">Версия: ${new Date().getFullYear()} · Дастур: ЭЗОҲ.txt дар GitHub (saidumarjo/auto-peshsaf)</div></div>`;
+  const vis=k=>sec===k?'':' hidden';
+  return top+`<form class="card set-form" id="f-set">
+    <div class="ssec"${vis('company')}>
     <div class="logo-edit">${logoHtml()}<div class="bar"><label class="upl">${IC('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/>',16)}${C.logo?'Логотипро иваз кардан':'Логотип гузоштан'}<input type="file" id="s-logo" accept="image/png,image/jpeg,image/webp"></label>${C.logo?'<button type="button" class="btn bad" data-act="logodel">Нест кардан</button>':''}</div>
     <div class="small muted">Расми мураббаъ беҳтар аст (PNG ё JPG). Логотип дар сарлавҳа ва саҳифаи воридшавӣ дида мешавад.</div></div>
     <div class="grid">
     ${inp('name','Номи ширкат',C.name,'required maxlength="40"')}${inp('tagline','Суроға ё шиор',C.tagline,'maxlength="60"')}${inp('phone','WhatsApp-и ширкат',C.phone,'inputmode="tel"')}</div>
-    <h2>Соҳа</h2><div class="small muted">Соҳаро интихоб кунед — номи майдонҳои дархост худкор иваз мешаванд. Баъд метавонед ҳар номро дастӣ ислоҳ кунед.</div>
+    </div>
+    <div class="ssec"${vis('fields')}>
+    <div class="small muted">Соҳаро интихоб кунед — номи майдонҳои дархост худкор иваз мешаванд. Баъд метавонед ҳар номро дастӣ ислоҳ кунед.</div>
     <div class="grid"><label>Соҳа<select id="s-industry" data-act="industry">${Object.entries(PRESETS).map(([k,p])=>`<option value="${k}" ${C.industry===k?'selected':''}>${esc(p.label)}</option>`).join('')}</select></label></div>
     <div class="grid">${inp('f1','Майдони 1 (объект)',C.f1)}${inp('f1s','Майдони 1 — номи кӯтоҳ',C.f1s)}${inp('f1ph','Майдони 1 — намуна',C.f1ph)}
       ${inp('f2','Майдони 2',C.f2)}${inp('f2ph','Майдони 2 — намуна',C.f2ph)}
       ${inp('f3','Майдони 3 (рақам/код)',C.f3)}${inp('f3ph','Майдони 3 — намуна',C.f3ph)}${inp('f3len','Майдони 3 — шумораи рамз (0 = ҳар гуна)',C.f3len,'type="number" min="0" max="40"')}
       ${inp('itemPh','Намунаи қисм/мол',C.itemPh)}${inp('refHint','Маслиҳат дар зери форма',C.refHint)}</div>
-    <label class="chk"><input type="checkbox" id="s-needRef" ${C.needRef?'checked':''}>Аз муштарӣ майдони 3 ё акс ҳатман талаб карда шавад</label>
-    <h2>Гурӯҳҳо ва намуди мол</h2><div class="grid">${inp('g1','Гурӯҳи 1',C.g1,'required')}${inp('g2','Гурӯҳи 2',C.g2,'required')}</div>
-    <h2>Асъор</h2><div class="grid">${inp('cur','Асъори асосӣ',C.cur,'required maxlength="6"')}${inp('cur2','Асъори дуюм (холӣ = нест)',C.cur2,'maxlength="6"')}${inp('rate2','Курси асъори дуюм барои 1 асъори асосӣ',C.rate2,'type="number" step="0.0001" min="0"')}${inp('vat','VAT (%) — ба нархи паставшик илова мешавад',C.vat??5,'type="number" min="0" max="30" step="0.5"')}</div>
-    <div class="bar"><button class="btn pri" type="submit" ${S.busy?'disabled':''}>Танзимотро сабт кардан</button></div></form>
-    <div class="note">Ин сайтро ширкатҳои дигар ҳам метавонанд истифода баранд: ҳар кас нусхаи худро бо Firebase-и худ мегирад ва дар ҳамин саҳифа ному соҳаи худро мегузорад.</div>`;
+        <label class="chk"><input type="checkbox" id="s-needRef" ${C.needRef?'checked':''}>Аз муштарӣ майдони 3 ё акс ҳатман талаб карда шавад</label>
+    </div>
+    <div class="ssec"${vis('groups')}>    <div class="grid">${inp('g1','Гурӯҳи 1',C.g1,'required')}${inp('g2','Гурӯҳи 2',C.g2,'required')}</div></div>
+    <div class="ssec"${vis('cur')}>    <div class="grid">${inp('cur','Асъори асосӣ',C.cur,'required maxlength="6"')}${inp('cur2','Асъори дуюм (холӣ = нест)',C.cur2,'maxlength="6"')}${inp('rate2','Курси асъори дуюм барои 1 асъори асосӣ',C.rate2,'type="number" step="0.0001" min="0"')}${inp('vat','VAT (%) — ба нархи паставшик илова мешавад',C.vat??5,'type="number" min="0" max="30" step="0.5"')}</div></div>
+    <div class="bar"><button class="btn pri" type="submit" ${S.busy?'disabled':''}>Сабт кардан</button></div></form>`;
 }
 function usersView(){
   const ws=Object.entries(S.workers).filter(([,w])=>w.active!==false).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
@@ -1013,7 +1025,7 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.act,id=b.dataset.id,r=id&&S.reqs.find(x=>x.id===id);
   switch(a){
     case'view':S.view=b.dataset.v;S.open=null;S.newReq=false;break;
-    case'gotoset':S.view='admin';S.open=null;S.newReq=false;S.adminTab=S.adminTab==='set'?'req':'set';render();scrollTo(0,0);return;
+    case'gotoset':S.setSec='';S.view='admin';S.open=null;S.newReq=false;S.adminTab=S.adminTab==='set'?'req':'set';render();scrollTo(0,0);return;
     case'atab':S.adminTab=b.dataset.v;render();scrollTo(0,0);return;
     case'rtab':S.repTab=b.dataset.v;break;
     case'fs':S.fStatus=b.dataset.v;break;
@@ -1038,6 +1050,7 @@ document.addEventListener('click',async e=>{
       if(before===after){render();return}
       await upd(id,{items:raw,parts:raw.map(x=>inm(x)).join(', ')},'Қисм иваз шуд: '+before+' → '+after);return}
     case'inv':S.inv=b.dataset.id;render();return;
+    case'setsec':S.setSec=b.dataset.v||'';render();scrollTo(0,0);return;
     case'verifymail':{const u=auth.currentUser;if(!u)return;try{await sendEmailVerification(u);S.verSent=true;toast('Мактуб ба '+u.email+' фиристода шуд')}catch(err){toast('Фиристода нашуд: '+errTxt(err))}break}
     case'backup':{try{const data={app:'auto-peshsaf',at:new Date().toISOString(),settings:C,requests:S.rawReqs,priv:S.privs,customers:S.customers,workers:S.workers||{},users:S.users||{},admins:S.admins||{}};
       const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const d=new Date();a.download='backup-'+(C.name||'app').replace(/\W+/g,'_')+'-'+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);S.lastBackup=Date.now();toast('Файл нигоҳ дошта шуд: '+a.download)}catch(err){toast('Хато: '+err.message)}break}
