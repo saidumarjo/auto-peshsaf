@@ -68,7 +68,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         if (request == FILE_REQUEST && fileCallback != null) {
-            fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result, data));
+            Uri[] res = null;
+            if (result == RESULT_OK && data != null) {
+                if (data.getClipData() != null) {
+                    int n = data.getClipData().getItemCount();
+                    res = new Uri[n];
+                    for (int i = 0; i < n; i++) res[i] = data.getClipData().getItemAt(i).getUri();
+                } else if (data.getData() != null) {
+                    res = new Uri[]{ data.getData() };
+                }
+            }
+            fileCallback.onReceiveValue(res);
             fileCallback = null;
             return;
         }
