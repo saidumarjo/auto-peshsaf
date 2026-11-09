@@ -8,9 +8,11 @@ service cloud.firestore {
       return signed() && request.auth.token.email_verified == true
         && request.auth.token.email in ['umar.safaroov@gmail.com'];
     }
+    function adminRef() { return /databases/$(database)/documents/admins/$(request.auth.token.email.lower()); }
     function isAdmin() {
-      return isOwner() || (signed() && request.auth.token.email_verified == true
-        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
+      return isOwner() || (signed() && request.auth.token.email != null && exists(adminRef())
+        && (request.auth.token.email_verified == true
+            || ('uid' in get(adminRef()).data && get(adminRef()).data.uid == request.auth.uid)));
     }
     function isWorker() { return signed() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
     function wid() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.wid; }

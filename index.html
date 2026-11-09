@@ -813,7 +813,7 @@ const ICON_CAM='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stro
 const S={authReady:false,ready:false,isAdmin:false,wid:null,cid:null,denied:null,
   rawReqs:{},extra:{},privs:{},workers:{},customers:{},users:{},reqs:[],
   view:null,adminTab:'req',repTab:'o',period:'month',fStatus:'active',fGroup:'all',fWorker:'all',wTab:'new',q:'',open:null,newReq:false,toast:null,busy:false,
-  nItems:1,lb:null,lastRate:null,entryTab:(typeof location!=='undefined'&&location.hash==='#worker')?'worker':(typeof location!=='undefined'&&location.hash==='#admin')?'admin':'customer',ph:{},phLoading:{}};
+  nItems:1,lb:null,lastRate:null,entryTab:(typeof location!=='undefined'&&location.hash==='#worker')?'worker':(typeof location!=='undefined'&&(location.hash==='#admin'||location.hash.indexOf('#a=')===0))?'admin':'customer',ph:{},phLoading:{}};
 const app=document.getElementById('app');
 S.det={};S.qOpen=null;
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.k)S.det[d.dataset.k]=d.open},true);
@@ -1632,7 +1632,8 @@ async function upd(id,patch,txt,silent){
     if(!silent)toast(txt);return true;
   }catch(e){toast('Сабт нашуд: '+errTxt(e));return false}
 }
-const inviteMsg=iv=>'Салом'+(iv.name?', '+iv.name:'')+'! Шумо роҳбари (админ) сайти '+(C.name||'AUTO PESHSAF')+' шудед.\n🔗 Силка: '+siteUrl()+'#admin\n📧 Gmail: '+iv.em+(iv.pw?'\n🔑 Парол: '+iv.pw:'')+'\n\nЧӣ тавр ворид шавед: силкаро кушоед → «Роҳбар» → Gmail ва паролро нависед'+(iv.pw?'':' (ё «Бо Google ворид шудан»)')+'. Дар аввал почтаро тасдиқ кунед: «Мактуб фиристодан» → Gmail-ро кушоед (Spam-ро ҳам санҷед) → тасдиқ → «Тасдиқ кардам».';
+const inviteLink=iv=>siteUrl()+(iv.pw?'#a='+encodeURIComponent(btoa(unescape(encodeURIComponent(iv.em+':'+iv.pw)))):'#admin');
+const inviteMsg=iv=>'Салом'+(iv.name?', '+iv.name:'')+'! Шумо роҳбари (админ) сайти '+(C.name||'AUTO PESHSAF')+' шудед.\n🔗 Силка: '+inviteLink(iv)+(iv.pw?'\n\nСилкаро пахш кунед, худаш ворид мешавад. Силкаро ба касе надиҳед.\n📧 Gmail: '+iv.em+'\n🔑 Парол: '+iv.pw:'\n📧 Gmail: '+iv.em+'\n\nСилкаро кушоед → «Роҳбар» → «Бо Google ворид шудан» бо ҳамин Gmail.');
 function inviteBox(){const iv=S.invite;if(!iv)return'';const m=inviteMsg(iv);return`<div class="card"><h2>Силкаи даъват · ${esc(iv.em)}</h2><div class="small muted">Инро ба роҳбари нав фиристед:</div><textarea id="inv-t" rows="7" readonly style="width:100%">${esc(m)}</textarea><div class="bar"><a class="btn pri" href="https://wa.me/?text=${encodeURIComponent(m)}" target="_blank" rel="noopener">WhatsApp</a><button class="btn" data-act="invcopy">Нусха кардан</button><button class="btn" data-act="invno">Пӯшидан</button></div></div>`}
 const val=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
 const fnum=id=>{const v=parseFloat(val(id));return isFinite(v)?v:null};
@@ -1697,10 +1698,10 @@ document.addEventListener('submit',async e=>{
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){toast('Почтаро дуруст нависед');return}
     if(ADMIN_EMAILS.includes(em)||(S.admins||{})[em]){toast('Ин почта аллакай роҳбар аст');return}
     const apw=(document.getElementById('ad-pass')||{}).value||'';if(apw&&apw.length<6){toast('Парол камаш 6 рамз бошад');return}
-    try{await setDoc(doc(db,'admins',em),{name:nm,email:em,addedAt:Date.now()});
-      let pm='';
-      if(apw){try{const sa=secondaryAuth();await createUserWithEmailAndPassword(sa,em,apw);await signOut(sa);pm=' · Парол: '+apw+' (ӯ дар аввал почтаро тасдиқ мекунад)'}catch(e2){const c=(e2&&e2.code)||'';pm=c.includes('email-already-in-use')?' · Парол аллакай ҳаст':' · Парол сабт нашуд: '+errTxt(e2)}}
-      ['ad-email','ad-name','ad-pass'].forEach(i=>{const x=document.getElementById(i);if(x)x.value=''});S.invite={em,pw:apw,name:nm};render();toast('Роҳбари нав илова шуд: '+em+pm)}catch(err){toast('Илова нашуд: '+errTxt(err))}
+    try{let pm='',auid='';
+      if(apw){try{const sa=secondaryAuth();const cr=await createUserWithEmailAndPassword(sa,em,apw);auid=cr.user.uid;await signOut(sa);pm=' · Парол: '+apw}catch(e2){const c=(e2&&e2.code)||'';pm=c.includes('email-already-in-use')?' · Ин почта аллакай ҳисоб дорад (бо Google ворид шавад ё парол созад)':' · Парол сабт нашуд: '+errTxt(e2)}}
+      await setDoc(doc(db,'admins',em),auid?{name:nm,email:em,addedAt:Date.now(),uid:auid}:{name:nm,email:em,addedAt:Date.now()});
+      ['ad-email','ad-name','ad-pass'].forEach(i=>{const x=document.getElementById(i);if(x)x.value=''});S.invite={em,pw:auid?apw:'',name:nm};render();toast('Роҳбари нав илова шуд: '+em+pm)}catch(err){toast('Илова нашуд: '+errTxt(err))}
     return;
   }
   if(fid==='f-set'){
@@ -1978,6 +1979,12 @@ async function startCustomer(cidv){
 render();
 onSnapshot(doc(db,'settings','app'),s=>{applyCfg(s.exists()?s.data():null);render()},()=>{});
 
+(async()=>{try{const hh=location.hash;if(hh.indexOf('#a=')!==0)return;
+  const cr=atob(decodeURIComponent(hh.slice(3)));const cr2=decodeURIComponent(escape(cr));const k=cr2.indexOf(':');if(k<1)return;
+  const em=cr2.slice(0,k).toLowerCase(),pw=cr2.slice(k+1);
+  try{history.replaceState(null,'',location.pathname+location.search+'#admin')}catch(_){}
+  S.justLogged=true;try{await signOut(auth)}catch(_){}
+  await signInWithEmailAndPassword(auth,em,pw)}catch(err){try{S.loginErr='Силка кор накард. Gmail ва паролро дастӣ нависед.';S.entryTab='admin';S.aPw=true;render()}catch(_){}}})();
 onAuthStateChanged(auth,async user=>{
   S.isAdmin=false;S.isOwner=false;S.wid=null;S.cid=null;S.denied=null;S.verify=null;S.view=null;
   if(!user){stopAll();S.authReady=true;S.ready=true;rebuild();render();return}
@@ -1987,7 +1994,7 @@ onAuthStateChanged(auth,async user=>{
     S.email=email;S.justLogged=S.justLogged||false;
     if(!user.isAnonymous&&ADMIN_EMAILS.includes(email)){S.isAdmin=true;S.isOwner=true;startAdmin();startPresence(S.justLogged?'login':'open');S.justLogged=false;return}
     if(!user.isAnonymous&&user.emailVerified&&!email.endsWith('@'+WORKER_DOMAIN)){const ad=await getDoc(doc(db,'admins',email)).catch(()=>null);if(ad&&ad.exists()){S.isAdmin=true;startAdmin();startPresence(S.justLogged?'login':'open');S.justLogged=false;return}}
-    if(!user.isAnonymous&&!user.emailVerified&&!email.endsWith('@'+WORKER_DOMAIN)){const ad0=await getDoc(doc(db,'admins',email)).catch(()=>null);if(ad0&&ad0.exists()){S.verify=email;S.ready=true;render();return}}
+    if(!user.isAnonymous&&!user.emailVerified&&!email.endsWith('@'+WORKER_DOMAIN)){const ad0=await getDoc(doc(db,'admins',email)).catch(()=>null);if(ad0&&ad0.exists()){if(ad0.data().uid&&ad0.data().uid===user.uid){S.isAdmin=true;startAdmin();startPresence(S.justLogged?'login':'open');S.justLogged=false;return}S.verify=email;S.ready=true;render();return}}
     if(email.endsWith('@'+WORKER_DOMAIN)){
       const st=await getDoc(doc(db,'staff',user.uid));
       if(!st.exists()){S.denied='Ин логин дигар фаъол нест. Аз роҳбар логини нав гиред.';S.ready=true;render();return}
