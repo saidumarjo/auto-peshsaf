@@ -1632,7 +1632,7 @@ async function upd(id,patch,txt,silent){
     if(!silent)toast(txt);return true;
   }catch(e){toast('Сабт нашуд: '+errTxt(e));return false}
 }
-const inviteMsg=iv=>'Салом'+(iv.name?', '+iv.name:'')+'! Шумо роҳбари (админ) сайти '+(C.name||'AUTO PESHSAF')+' шудед.\n🔗 Силка: '+siteUrl()+'\n📧 Gmail: '+iv.em+(iv.pw?'\n🔑 Парол: '+iv.pw:'')+'\n\nЧӣ тавр ворид шавед: силкаро кушоед → «Роҳбар» → Gmail ва паролро нависед'+(iv.pw?'':' (ё «Бо Google ворид шудан»)')+'. Дар аввал почтаро тасдиқ кунед: «Мактуб фиристодан» → Gmail-ро кушоед (Spam-ро ҳам санҷед) → тасдиқ → «Тасдиқ кардам».';
+const inviteMsg=iv=>'Салом'+(iv.name?', '+iv.name:'')+'! Шумо роҳбари (админ) сайти '+(C.name||'AUTO PESHSAF')+' шудед.\n🔗 Силка: '+siteUrl()+'#admin\n📧 Gmail: '+iv.em+(iv.pw?'\n🔑 Парол: '+iv.pw:'')+'\n\nЧӣ тавр ворид шавед: силкаро кушоед → «Роҳбар» → Gmail ва паролро нависед'+(iv.pw?'':' (ё «Бо Google ворид шудан»)')+'. Дар аввал почтаро тасдиқ кунед: «Мактуб фиристодан» → Gmail-ро кушоед (Spam-ро ҳам санҷед) → тасдиқ → «Тасдиқ кардам».';
 function inviteBox(){const iv=S.invite;if(!iv)return'';const m=inviteMsg(iv);return`<div class="card"><h2>Силкаи даъват · ${esc(iv.em)}</h2><div class="small muted">Инро ба роҳбари нав фиристед:</div><textarea id="inv-t" rows="7" readonly style="width:100%">${esc(m)}</textarea><div class="bar"><a class="btn pri" href="https://wa.me/?text=${encodeURIComponent(m)}" target="_blank" rel="noopener">WhatsApp</a><button class="btn" data-act="invcopy">Нусха кардан</button><button class="btn" data-act="invno">Пӯшидан</button></div></div>`}
 const val=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
 const fnum=id=>{const v=parseFloat(val(id));return isFinite(v)?v:null};
