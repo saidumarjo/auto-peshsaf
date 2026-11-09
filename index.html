@@ -813,7 +813,7 @@ const ICON_CAM='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stro
 const S={authReady:false,ready:false,isAdmin:false,wid:null,cid:null,denied:null,
   rawReqs:{},extra:{},privs:{},workers:{},customers:{},users:{},reqs:[],
   view:null,adminTab:'req',repTab:'o',period:'month',fStatus:'active',fGroup:'all',fWorker:'all',wTab:'new',q:'',open:null,newReq:false,toast:null,busy:false,
-  nItems:1,lb:null,lastRate:null,entryTab:(typeof location!=='undefined'&&location.hash==='#worker')?'worker':'customer',ph:{},phLoading:{}};
+  nItems:1,lb:null,lastRate:null,entryTab:(typeof location!=='undefined'&&location.hash==='#worker')?'worker':(typeof location!=='undefined'&&location.hash==='#admin')?'admin':'customer',ph:{},phLoading:{}};
 const app=document.getElementById('app');
 S.det={};S.qOpen=null;
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.k)S.det[d.dataset.k]=d.open},true);
@@ -1250,7 +1250,7 @@ function usersView(){
   const adminsBox=`<h3>Роҳбарон (админ) · ${owners.length+ads.length}</h3><div class="ulist">${owners.concat(ads).map(([e,a])=>`<div class="urow"><div class="av">${esc(initials(a.name||e))}</div><div class="main"><div style="font-weight:700">${esc(a.name||e.split('@')[0])}${a.owner?' <span class="pill k-g">Соҳиб</span>':''}</div><div class="small muted">${esc(e)}</div></div>${!a.owner&&S.isOwner?(S.confirmAdm===e?`<div class="bar"><button class="btn bad" data-act="admdel" data-v="${esc(e)}">Ҳа, хориҷ кун</button><button class="btn" data-act="admno">Не</button></div>`:`<button class="btn bad" data-act="admdel" data-v="${esc(e)}">Хориҷ кардан</button>`):''}</div>`).join('')}</div>
     ${S.isOwner?`<form class="card" id="f-adm"><h2>Илова кардани роҳбар</h2><div class="small muted">Роҳбари нав ҳамаи дастрасиҳои шуморо мегирад: дархостҳо, нархҳо, пул, коргарон ва танзимот. Танҳо шумо (соҳиб) роҳбаронро илова ё хориҷ карда метавонед.</div>
       <div class="grid"><label>Ном<input id="ad-name" placeholder="Масалан: Фирӯз"></label><label>Почтаи Gmail<input id="ad-email" type="email" required inputmode="email" autocapitalize="none" placeholder="name@gmail.com"></label><label>Парол (камаш 6, ихтиёрӣ)<input id="ad-pass" autocomplete="new-password" minlength="6" placeholder="Барои ворид шудан бе Google"></label></div>
-      <div><button class="btn pri" type="submit">Роҳбар кардан</button></div><div class="small muted">Парол диҳед: роҳбари нав «Роҳбар» → Gmail + парол менависад, баъд як бор почтаро тасдиқ мекунад (мактуб меояд). Бе парол: «Бо Google ворид шудан» дар Chrome.</div></form>`:''}`;
+      <div><button class="btn pri" type="submit">Роҳбар кардан</button></div><div class="small muted">Парол диҳед: роҳбари нав «Роҳбар» → Gmail + парол менависад, баъд як бор почтаро тасдиқ мекунад (мактуб меояд). Бе парол: «Бо Google ворид шудан» дар Chrome.</div></form>${inviteBox()}`:''}`;
   return add+adminsBox+`<div class="note">Ба ҳар коргар <b>логин ва парол</b> диҳед. Коргар сайтро мекушояд, «Коргар»-ро интихоб мекунад ва бо ҳамон логин-парол ворид мешавад.</div>`
     +`<h3>Коргарон · ${ws.length}</h3>`+(ws.length?`<div class="ulist">${ws.map(wrow).join('')}</div>`:`<div class="empty"><b>Ҳоло коргар нест</b><span class="small">Бо формаи боло илова кунед.</span></div>`)
     +`<h3>Муштариён · ${cs.length}</h3>`+(cs.length?`<div class="ulist">${cs.map(([id,u])=>`<div class="urow"><div class="av">${esc(initials(u.name))}</div><div class="main"><div style="font-weight:600">${esc(u.name)}</div><div class="small muted">${esc(u.phone||'')} · ${S.reqs.filter(r=>r.customerId===id).length} дархост</div></div>${u.phone?`<a class="btn" href="${waLink(u.phone)}" target="_blank" rel="noopener">WhatsApp</a>`:''}</div>`).join('')}</div>`:`<div class="empty"><b>Ҳоло муштарӣ нест</b></div>`);
@@ -1632,6 +1632,8 @@ async function upd(id,patch,txt,silent){
     if(!silent)toast(txt);return true;
   }catch(e){toast('Сабт нашуд: '+errTxt(e));return false}
 }
+const inviteMsg=iv=>'Салом'+(iv.name?', '+iv.name:'')+'! Шумо роҳбари (админ) сайти '+(C.name||'AUTO PESHSAF')+' шудед.\n🔗 Силка: '+siteUrl()+'\n📧 Gmail: '+iv.em+(iv.pw?'\n🔑 Парол: '+iv.pw:'')+'\n\nЧӣ тавр ворид шавед: силкаро кушоед → «Роҳбар» → Gmail ва паролро нависед'+(iv.pw?'':' (ё «Бо Google ворид шудан»)')+'. Дар аввал почтаро тасдиқ кунед: «Мактуб фиристодан» → Gmail-ро кушоед (Spam-ро ҳам санҷед) → тасдиқ → «Тасдиқ кардам».';
+function inviteBox(){const iv=S.invite;if(!iv)return'';const m=inviteMsg(iv);return`<div class="card"><h2>Силкаи даъват · ${esc(iv.em)}</h2><div class="small muted">Инро ба роҳбари нав фиристед:</div><textarea id="inv-t" rows="7" readonly style="width:100%">${esc(m)}</textarea><div class="bar"><a class="btn pri" href="https://wa.me/?text=${encodeURIComponent(m)}" target="_blank" rel="noopener">WhatsApp</a><button class="btn" data-act="invcopy">Нусха кардан</button><button class="btn" data-act="invno">Пӯшидан</button></div></div>`}
 const val=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
 const fnum=id=>{const v=parseFloat(val(id));return isFinite(v)?v:null};
 function calcPP(id){
@@ -1698,7 +1700,7 @@ document.addEventListener('submit',async e=>{
     try{await setDoc(doc(db,'admins',em),{name:nm,email:em,addedAt:Date.now()});
       let pm='';
       if(apw){try{const sa=secondaryAuth();await createUserWithEmailAndPassword(sa,em,apw);await signOut(sa);pm=' · Парол: '+apw+' (ӯ дар аввал почтаро тасдиқ мекунад)'}catch(e2){const c=(e2&&e2.code)||'';pm=c.includes('email-already-in-use')?' · Парол аллакай ҳаст':' · Парол сабт нашуд: '+errTxt(e2)}}
-      ['ad-email','ad-name','ad-pass'].forEach(i=>{const x=document.getElementById(i);if(x)x.value=''});toast('Роҳбари нав илова шуд: '+em+pm)}catch(err){toast('Илова нашуд: '+errTxt(err))}
+      ['ad-email','ad-name','ad-pass'].forEach(i=>{const x=document.getElementById(i);if(x)x.value=''});S.invite={em,pw:apw,name:nm};render();toast('Роҳбари нав илова шуд: '+em+pm)}catch(err){toast('Илова нашуд: '+errTxt(err))}
     return;
   }
   if(fid==='f-set'){
@@ -1906,6 +1908,8 @@ document.addEventListener('click',async e=>{
       const kg=fnum('o-kg-'+id),dd=val('o-dd-'+id);if(!(kg>0)){toast('Вазни борро (кг) нависед');return}if(!dd){toast('Рӯзи супоридан ба муштариро интихоб кунед');return}
       await upd(id,{status:'shipped',ordStage:'shipped',cargo:cg,tracking:tk,weight:kg,deliverBy:new Date(dd+'T12:00').getTime(),shippedAt:Date.now()},'Ба карго дода шуд: '+cg+(tk?' · '+tk:'')+' · '+kg+' кг · то '+dd);return}
     case'admno':S.confirmAdm=null;break;
+    case'invcopy':{try{await navigator.clipboard.writeText(inviteMsg(S.invite));toast('Нусха шуд')}catch(err){const t=document.getElementById('inv-t');if(t){t.select();toast('Матнро дароз пахш карда нусха кунед')}}return}
+    case'invno':S.invite=null;break;
     case'admdel':{const em=b.dataset.v;if(S.confirmAdm!==em){S.confirmAdm=em;break}try{await deleteDoc(doc(db,'admins',em));S.confirmAdm=null;toast('Хориҷ шуд: '+em)}catch(err){toast('Нашуд: '+errTxt(err))}return}
     case'delno':S.confirmDel=null;break;
     case'delreq':{if(S.confirmDel!==id){S.confirmDel=id;break}
